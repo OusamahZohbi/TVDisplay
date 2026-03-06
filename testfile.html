@@ -496,6 +496,49 @@ body.is-ramadan .panel-en{color:#E8A83B}
 .nb-card-title{font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;font-weight:700;margin-bottom:2px}
 .nb-card-body{font-size:12px;color:var(--cream-d);line-height:1.65}
 
+/* ══════════════════════════════
+   RAMADAN SCREEN OVERHAUL — new/override rules
+══════════════════════════════ */
+/* Times card — bigger text */
+.ram-time-val{font-size:32px!important;font-weight:900!important}
+.ram-time-lbl{font-size:15px!important;letter-spacing:2px!important}
+.ram-time-cnt{font-size:13px!important}
+.ram-tarawih-time{font-size:26px!important}
+.ram-tarawih-lbl{font-size:15px!important}
+/* Day counter — centered column */
+.ram-day-counter{flex-direction:column;align-items:center;gap:10px;text-align:center}
+.ram-dc-boxes{display:flex;gap:14px;justify-content:center}
+.ram-gates{font-size:14px;color:var(--cream-d);line-height:1.6;text-align:center;max-width:340px;margin:0 auto;font-style:italic}
+/* Dua */
+.ram-dua{font-family:'Amiri',serif;font-size:24px;color:var(--gold-l);direction:rtl;text-align:center;line-height:1.9;margin-top:2px}
+.ram-dua-en{font-size:12px;color:var(--cream-d);font-style:italic;text-align:center;margin-top:2px}
+/* Donation section */
+.ram-donation{background:rgba(212,160,23,.05);border:1px solid rgba(212,160,23,.25);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0}
+.ram-don-quote{font-size:12px;color:var(--cream-d);font-style:italic;text-align:center;line-height:1.6}
+.ram-don-qr-row{display:flex;gap:16px;align-items:flex-start;width:100%}
+.ram-don-qr{width:84px;height:84px;background:white;border-radius:8px;padding:4px;flex-shrink:0}
+.ram-don-qr img{width:100%;height:100%;display:block}
+.ram-bank-dets{font-size:11px;color:var(--cream-d);line-height:1.85;text-align:left;flex:1}
+.ram-bank-dets b{color:var(--gold-l);font-weight:700}
+/* Suhoor note */
+.ram-suhoor-note{font-size:10px;color:var(--gold-d);font-style:italic;margin-top:2px}
+/* Checklist */
+.ram-checklist-card{background:rgba(255,255,255,.03);border:1px solid rgba(201,122,47,.2);border-radius:14px;padding:13px 16px;flex:1;display:flex;flex-direction:column;gap:7px;overflow:hidden}
+.ram-checklist-title{font-family:'Cinzel',serif;font-size:10px;letter-spacing:4px;color:#E8A83B;text-transform:uppercase;margin-bottom:2px}
+.ram-check-item{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--cream);line-height:1.4}
+.ram-check-icon{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(201,122,47,.5);display:flex;align-items:center;justify-content:center;font-size:11px;color:#F5CC6B;flex-shrink:0;background:rgba(201,122,47,.1)}
+/* Tahajjud row */
+.ram-tahajjud{background:rgba(46,204,113,.06);border:1px solid rgba(46,204,113,.2);border-radius:9px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.ram-tahajjud-lbl{font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:var(--teal);text-transform:uppercase}
+.ram-tahajjud-time{font-size:20px;font-weight:700;color:var(--teal)}
+/* Combined Ramadan + Friday */
+body.is-friday .ram-donation{display:none}
+body.is-friday .ram-friday-bonus{display:flex!important}
+.ram-friday-bonus{display:none;background:rgba(46,204,113,.07);border:1px solid rgba(46,204,113,.22);border-radius:12px;padding:10px 14px;flex-direction:column;gap:6px;flex-shrink:0}
+.ram-fri-title{font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:var(--teal);text-transform:uppercase;margin-bottom:2px}
+.ram-fri-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--cream-d)}
+.ram-fri-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0}
+
 @media (max-width:1200px){
   .main-body{grid-template-rows:auto auto 1fr auto}
   .bottom-panels{grid-template-columns:1fr}
@@ -636,6 +679,11 @@ body.is-ramadan .panel-en{color:#E8A83B}
           <div class="fri-h-en">"The best day on which the sun rises is Friday. On it Adam was created, on it he entered Paradise, and on it he was expelled from it."</div>
           <div class="fri-h-src">Abu Hurayrah (RA) · Sahih Muslim 854</div>
         </div>
+        <div class="fri-hadith" style="border-left-color:var(--gold-d);margin-top:2px">
+          <div class="fri-h-ar" style="font-size:19px">اللَّهُمَّ صَلِّ وَسَلِّمْ وَبَارِكْ عَلَى نَبِيِّنَا مُحَمَّدٍ</div>
+          <div class="fri-h-en">"O Allah, send peace, blessings and salutations upon our Prophet Muhammad."</div>
+          <div class="fri-h-src">Du'a of Friday — send salawat abundantly today</div>
+        </div>
       </div>
       <div class="jumuah-card">
         <div class="jumuah-lbl">🕌 Jumu'ah Prayer</div>
@@ -719,28 +767,74 @@ body.is-ramadan .panel-en{color:#E8A83B}
     <div class="hdr-right"><div class="hdr-time" id="clk3">--:--</div><div class="hdr-date" id="dat3">--</div><div class="hdr-hijri" id="hij3">--</div></div>
   </div>
   <div class="ram-body">
+
+    <!-- LEFT COLUMN -->
     <div class="ram-left">
       <div class="ram-hero">
         <div class="ram-badge">🌙 The Blessed Month</div>
-        <div class="ram-title">Ramadan Kareem</div>
-        <div class="ram-title-ar">رَمَضَانُ الْكَرِيم</div>
+        <div class="ram-title">Ramadan Mubarak</div>
+        <div class="ram-title-ar">رَمَضَانُ الْمُبَارَك</div>
+        <div class="ram-dua">اللَّهُمَّ أَعِنَّا عَلَى صِيَامِهِ وَقِيَامِهِ وَتِلَاوَتِهِ</div>
+        <div class="ram-dua-en">"O Allah, help us in fasting, standing in prayer, and reciting the Quran."</div>
+
+        <!-- Day counter — centered -->
         <div class="ram-day-counter">
-          <div class="ram-dc-box"><div class="ram-dc-num" id="ram-day-num">1</div><div class="ram-dc-lbl">Day</div></div>
-          <div class="ram-dc-box"><div class="ram-dc-num" id="ram-remaining">29</div><div class="ram-dc-lbl">Remaining</div></div>
-          <div style="flex:1;font-size:13px;color:var(--cream-d);line-height:1.6">The gates of Paradise are opened, the gates of Hell are closed, and the devils are chained.</div>
+          <div class="ram-dc-boxes">
+            <div class="ram-dc-box"><div class="ram-dc-num" id="ram-day-num">1</div><div class="ram-dc-lbl">Day</div></div>
+            <div class="ram-dc-box"><div class="ram-dc-num" id="ram-remaining">29</div><div class="ram-dc-lbl">Remaining</div></div>
+          </div>
+          <div class="ram-gates">The gates of Paradise are opened, the gates of Hell are closed, and the devils are chained.</div>
         </div>
+
         <div class="ram-tip" id="ram-tip">"Whoever fasts Ramadan out of faith and seeking reward, his previous sins will be forgiven." — Bukhari</div>
-        <div class="ram-cta">
-          <div class="item"><div class="k">Tonight's Juz</div><div class="v" id="ram-juz">Juz 1 after Isha</div></div>
-          <div class="item"><div class="k">Zakat Reminder</div><div class="v" id="ram-zakat">Track your Zakat and Sadaqah this week.</div></div>
+
+        <!-- Donation section (hidden on Ramadan+Friday via body.is-friday CSS) -->
+        <div class="ram-donation" id="ram-donation-section">
+          <div class="ram-don-quote">"The Prophet ﷺ was most generous in Ramadan. Give sadaqah this month — your reward is multiplied." — Bukhari &amp; Muslim</div>
+          <div class="ram-don-qr-row">
+            <div class="ram-don-qr">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://aswjgiyc.org/donate&color=080F0B&bgcolor=FFFFFF" alt="Donate QR"/>
+            </div>
+            <div class="ram-bank-dets">
+              <div><b>Account Name</b><br>Global Islamic Youth Centre Ltd</div>
+              <div style="margin-top:5px"><b>BSB:</b> 112-879 &nbsp;|&nbsp; <b>Account:</b> 068 259 342</div>
+              <div style="margin-top:3px"><b>Reference:</b> Donation</div>
+            </div>
+          </div>
         </div>
+
+        <!-- Friday + Ramadan bonus (shown only when body.is-friday) -->
+        <div class="ram-friday-bonus">
+          <div class="ram-fri-title">🌟 Jumu'ah in Ramadan — Extra Blessings</div>
+          <div class="ram-fri-item"><div class="ram-fri-dot"></div>Recite Surah Al-Kahf today (Friday sunnah)</div>
+          <div class="ram-fri-item"><div class="ram-fri-dot"></div>Send abundant salawat on the Prophet ﷺ</div>
+          <div class="ram-fri-item"><div class="ram-fri-dot"></div>Make du'a in the last hour before Maghrib</div>
+          <div class="ram-fri-item"><div class="ram-fri-dot"></div>Jumu'ah Prayer — 1:30 PM · Lurnea Community Hall</div>
+        </div>
+
+        <!-- Hidden JS ID hooks (JS checks with if($(...)) so safe to hide) -->
+        <span id="ram-juz" style="display:none"></span>
+        <span id="ram-zakat" style="display:none"></span>
       </div>
     </div>
+
+    <!-- RIGHT COLUMN -->
     <div class="ram-right">
       <div class="ram-times-card">
-        <div class="panel-en" style="color:#E8A83B">Ramadan Times</div>
+        <div class="panel-en" style="color:#E8A83B;margin-bottom:4px">Ramadan Times</div>
+
+        <!-- Tahajjud (static time) -->
+        <div class="ram-tahajjud">
+          <div><div class="ram-tahajjud-lbl">🌌 Tahajjud Start</div><div style="font-size:11px;color:var(--muted)">Last third of the night</div></div>
+          <div class="ram-tahajjud-time">3:15 AM</div>
+        </div>
+
         <div class="ram-time-row">
-          <div><div class="ram-time-lbl">🌅 Suhoor Ends</div><div class="ram-time-cnt">Fajr Adhan</div></div>
+          <div>
+            <div class="ram-time-lbl">🌅 Suhoor Ends</div>
+            <div class="ram-time-cnt">Fajr Adhan</div>
+            <div class="ram-suhoor-note">Suhoor provided here in the last 10 nights</div>
+          </div>
           <div class="ram-time-val" id="ram-suhoor">--:--</div>
         </div>
         <div class="ram-time-row">
@@ -752,17 +846,25 @@ body.is-ramadan .panel-en{color:#E8A83B}
           <div class="ram-tarawih-time" id="ram-tarawih-time">--:--</div>
         </div>
       </div>
-      <div class="ram-ayah-card">
-        <div class="panel-en" style="color:#E8A83B">Verse on Ramadan</div>
-        <div class="ram-ayah-ar">شَهْرُ رَمَضَانَ الَّذِي أُنزِلَ فِيهِ الْقُرْآنُ هُدًى لِّلنَّاسِ</div>
-        <div class="ram-ayah-en">"The month of Ramadan in which the Quran was revealed as guidance for mankind."</div>
-        <div class="ram-ayah-ref">Surah Al-Baqarah 2:185</div>
+
+      <!-- Ramadan Checklist (replaces verse card) -->
+      <div class="ram-checklist-card">
+        <div class="ram-checklist-title">Ramadan Checklist</div>
+        <div class="ram-check-item"><div class="ram-check-icon">✓</div>Complete your fast (Sawm) with intention</div>
+        <div class="ram-check-item"><div class="ram-check-icon">✓</div>Pray all 5 prayers on time</div>
+        <div class="ram-check-item"><div class="ram-check-icon">✓</div>Attend Tarawih prayer tonight</div>
+        <div class="ram-check-item"><div class="ram-check-icon">✓</div>Read at least 1 Juz of Quran today</div>
+        <div class="ram-check-item"><div class="ram-check-icon">✓</div>Give Sadaqah — even a smile counts</div>
+        <div class="ram-check-item"><div class="ram-check-icon">✓</div>Make Du'a at Iftar — it is accepted</div>
+        <div class="ram-check-item"><div class="ram-check-icon">✓</div>Last 10 nights: seek Laylat al-Qadr</div>
+        <div class="ram-check-item"><div class="ram-check-icon">✓</div>Suhoor — do not miss it, it is blessed</div>
       </div>
     </div>
+
   </div>
   <div class="ftr">
     <div class="ftr-dots" id="d3"></div>
-    <div class="ftr-marq"><span class="marq">Ramadan Mubarak from ASWJ GIYC &nbsp;•&nbsp; Tarawih after Isha &nbsp;•&nbsp; Increase your Quran recitation &nbsp;•&nbsp; Last 10 nights: seek Laylat al-Qadr &nbsp;•&nbsp; aswjgiyc.org</span></div>
+    <div class="ftr-marq"><span class="marq">Ramadan Mubarak from ASWJ GIYC &nbsp;•&nbsp; Tarawih after Isha &nbsp;•&nbsp; Tahajjud from 3:15 AM &nbsp;•&nbsp; Last 10 nights: seek Laylat al-Qadr &nbsp;•&nbsp; Donate: BSB 112-879 · Acc 068 259 342 &nbsp;•&nbsp; aswjgiyc.org</span></div>
     <div class="ftr-label">RAMADAN</div>
   </div>
 </div>
@@ -1089,6 +1191,7 @@ let lastAdhanPrayer = '';
 function buildScreenList() {
   const { isFriday, isEid, eid, isRamadan } = getSpecial();
   document.body.classList.toggle('is-ramadan', isRamadan);
+  document.body.classList.toggle('is-friday', isFriday);
 
   if (isEid) {
     $('eid-ar').textContent    = eid.greetingAr;

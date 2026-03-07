@@ -9,16 +9,17 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --p:#5BB8F5;--pl:#D0EEFF;--pd:#2A7AB8;
-  --bg:#05131F;--surface:#0A1E30;--surface2:#0D2438;
-  --border:rgba(91,184,245,.15);--border-h:rgba(91,184,245,.35);
-  --text:#F0F8FF;--text-d:#8AB4CC;--text-m:rgba(208,238,255,.5);
-  --danger:#E05555;--success:#3DB87A;--teal:#38BDF8;
+  --p:#F0C040;--pl:#FFE080;--pd:#8a6a1a;
+  --bg:#071A0E;--surface:#0D2818;--surface2:#112E1C;
+  --border:rgba(240,192,64,.15);--border-h:rgba(240,192,64,.35);
+  --text:#FDF6E3;--text-d:#A89870;--text-m:rgba(253,246,227,.5);
+  --danger:#E05555;--success:#3DB87A;--teal:#12C494;
+  --accent:#12C494;--accent-l:#3DFFB0;
 }
 html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px}
 
 /* LOGIN */
-#login-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,rgba(91,184,245,.08),transparent 60%),var(--bg);z-index:999}
+#login-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,rgba(240,192,64,.08),transparent 60%),var(--bg);z-index:999}
 .login-box{background:var(--surface);border:1px solid var(--border-h);border-radius:20px;padding:48px 40px;width:400px;display:flex;flex-direction:column;align-items:center;gap:20px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .login-logo{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--p);letter-spacing:3px}
 .login-sub{font-size:10px;letter-spacing:4px;color:var(--text-d);text-transform:uppercase;margin-top:-12px}
@@ -38,8 +39,8 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'I
 .sb-logo-centre{font-size:10px;color:var(--text-d);margin-top:3px;letter-spacing:1px}
 .sb-section{padding:12px 12px 4px;font-size:9px;letter-spacing:3px;color:var(--text-m);text-transform:uppercase}
 .sb-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:9px;margin:1px 8px;cursor:pointer;color:var(--text-d);font-size:13px;font-weight:500;transition:all .2s;border:1px solid transparent}
-.sb-item:hover{background:rgba(91,184,245,.06);color:var(--text)}
-.sb-item.active{background:rgba(91,184,245,.12);border-color:rgba(91,184,245,.25);color:var(--pl)}
+.sb-item:hover{background:rgba(240,192,64,.06);color:var(--text)}
+.sb-item.active{background:rgba(240,192,64,.12);border-color:rgba(240,192,64,.25);color:var(--pl)}
 .sb-icon{font-size:16px;width:20px;text-align:center}
 .sb-footer{margin-top:auto;padding:16px 12px;border-top:1px solid var(--border)}
 .sb-status{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-m);margin-bottom:4px}
@@ -84,8 +85,8 @@ hr{border:none;border-top:1px solid var(--border);margin:6px 0}
 .btn-icon{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text-d);font-size:12px;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
 .btn-icon:hover{background:rgba(255,255,255,.1);color:var(--text)}
 .btn-icon.del:hover{background:rgba(224,85,85,.15);border-color:rgba(224,85,85,.3);color:var(--danger)}
-.btn-add{display:flex;align-items:center;gap:7px;padding:9px 14px;background:rgba(91,184,245,.07);border:1px dashed rgba(91,184,245,.25);border-radius:9px;color:var(--pd);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;width:100%;font-family:'Inter',sans-serif}
-.btn-add:hover{background:rgba(91,184,245,.12);color:var(--p);border-color:var(--border-h)}
+.btn-add{display:flex;align-items:center;gap:7px;padding:9px 14px;background:rgba(240,192,64,.07);border:1px dashed rgba(240,192,64,.25);border-radius:9px;color:var(--pd);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;width:100%;font-family:'Inter',sans-serif}
+.btn-add:hover{background:rgba(240,192,64,.12);color:var(--p);border-color:var(--border-h)}
 
 /* Toggle */
 .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
@@ -249,6 +250,23 @@ hr{border:none;border-top:1px solid var(--border);margin:6px 0}
     <div class="page" id="page-events">
       <div class="page-hdr"><h1>Events</h1><p>Up to 4 events show on screen at once (the 4 most recently created active events).</p></div>
       <div class="save-bar"><span>Saves directly to Supabase — display updates in real-time.</span></div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Google Sheets Feed</div>
+        <div class="field-note" style="margin-bottom:10px">
+          Publish your Google Sheet as CSV (File → Share → Publish to web → Sheet 1 → CSV) and paste the URL below.
+          Events auto-refresh every 30 min on the display.<br>
+          Required columns: <b>Category, Audience, Title, Date &amp; Time, Location, Description, Flyer Image URL</b>
+        </div>
+        <div class="field">
+          <label>Sheet CSV URL</label>
+          <input type="url" id="ev-sheet-url-inp" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv" style="font-size:11px"/>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+          <button class="btn-save" onclick="saveSheetUrl()">Save URL</button>
+          <span class="saved-msg" id="saved-sheet-url">✓ Saved</span>
+          <span id="sheet-url-status" style="font-size:11px;color:var(--text-m)"></span>
+        </div>
+      </div>
       <div id="events-list"></div>
       <button class="btn-add" onclick="openModal('event')">+ Add New Event</button>
     </div>
@@ -387,15 +405,15 @@ hr{border:none;border-top:1px solid var(--border);margin:6px 0}
       <div class="card">
         <div class="card-title">Colour Scheme</div>
         <div class="grid2">
-          <div class="field"><label>Primary Accent</label><input type="color" id="b-primary" value="#5BB8F5"/><div class="field-note">Main colour — headers, times, highlights</div></div>
-          <div class="field"><label>Secondary Accent</label><input type="color" id="b-secondary" value="#38BDF8"/><div class="field-note">Teal/secondary — badges, lines</div></div>
+          <div class="field"><label>Primary Accent</label><input type="color" id="b-primary" value="#F0C040"/><div class="field-note">Main colour — headers, times, highlights</div></div>
+          <div class="field"><label>Secondary Accent</label><input type="color" id="b-secondary" value="#12C494"/><div class="field-note">Teal/secondary — badges, lines</div></div>
           <div class="field"><label>Background</label><input type="color" id="b-bg" value="#05131F"/><div class="field-note">Screen background colour</div></div>
           <div class="field"><label>Text Colour</label><input type="color" id="b-text" value="#F0F8FF"/><div class="field-note">Main body text</div></div>
         </div>
         <div style="margin-top:14px">
           <div style="font-size:11px;color:var(--text-m);margin-bottom:8px">Quick Presets:</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn-add" style="width:auto" onclick="setPreset('#5BB8F5','#38BDF8','#05131F','#F0F8FF')">🔵 Blue (Default)</button>
+            <button class="btn-add" style="width:auto" onclick="setPreset('#F0C040','#12C494','#05131F','#F0F8FF')">🔵 Blue (Default)</button>
             <button class="btn-add" style="width:auto" onclick="setPreset('#F0C040','#12C494','#071A0E','#FDF6E3')">🟢 Green/Gold</button>
             <button class="btn-add" style="width:auto" onclick="setPreset('#A78BFA','#7C3AED','#0D0A1F','#EDE9FE')">🟣 Purple</button>
             <button class="btn-add" style="width:auto" onclick="setPreset('#F97316','#EF4444','#1A0A00','#FFF7ED')">🟠 Orange</button>
@@ -415,6 +433,11 @@ hr{border:none;border-top:1px solid var(--border);margin:6px 0}
     <div class="field"><label>Title</label><input type="text" id="ev-title"/></div>
     <div class="field"><label>Description</label><textarea id="ev-desc"></textarea></div>
     <div class="field"><label>Details (one per line)</label><textarea id="ev-details" placeholder="📅 March 30&#10;🕖 After Isha&#10;📍 Main Hall" style="min-height:80px"></textarea></div>
+    <div class="field">
+      <label>Flyer / Image URL (optional)</label>
+      <input type="url" id="ev-image" placeholder="https://drive.google.com/... or any direct image URL"/>
+      <div class="field-note">Paste a Google Drive share link or direct image URL. The image fills the entire card as a flyer.</div>
+    </div>
     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('event')">Cancel</button><button class="btn-save" onclick="saveEventModal()">Save</button></div>
   </div>
 </div>
@@ -430,8 +453,8 @@ hr{border:none;border-top:1px solid var(--border);margin:6px 0}
     <div class="field"><label>Class Name</label><input type="text" id="tt-name"/></div>
     <div class="field"><label>Colour</label>
       <div class="swatch-row" style="margin-top:4px">
-        <div class="swatch sel" id="sw-gold" style="background:#5BB8F5" onclick="selSwatch('gold')"></div>
-        <div class="swatch" id="sw-teal" style="background:#38BDF8" onclick="selSwatch('teal')"></div>
+        <div class="swatch sel" id="sw-gold" style="background:#F0C040" onclick="selSwatch('gold')"></div>
+        <div class="swatch" id="sw-teal" style="background:#12C494" onclick="selSwatch('teal')"></div>
         <div class="swatch" id="sw-purple" style="background:#7B5FE0" onclick="selSwatch('purple')"></div>
       </div>
     </div>
@@ -588,14 +611,20 @@ async function savePrayer() {
 //  EVENTS
 // ════════════════════════════════════
 function renderEvents() {
+  const urlInp = document.getElementById('ev-sheet-url-inp');
+  if (urlInp) {
+    urlInp.value = C.events_sheet_url || '';
+    document.getElementById('sheet-url-status').textContent = C.events_sheet_url ? '● Connected' : '';
+  }
   const el=document.getElementById('events-list');
   el.innerHTML = EVENTS.map(e=>`
     <div class="list-item">
       <div class="list-item-body">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
-          <span style="background:rgba(91,184,245,.1);border:1px solid rgba(91,184,245,.2);padding:2px 8px;border-radius:20px;font-size:9px;color:var(--pl);letter-spacing:2px;font-weight:700">${e.tag}</span>
+          <span style="background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.2);padding:2px 8px;border-radius:20px;font-size:9px;color:var(--pl);letter-spacing:2px;font-weight:700">${e.tag}</span>
           <span class="list-item-title">${e.title}</span>
           ${!e.active?'<span style="font-size:9px;color:var(--danger);border:1px solid;padding:1px 6px;border-radius:10px">Hidden</span>':''}
+          ${e.image?'<span style="font-size:10px;color:var(--accent)">🖼 Flyer</span>':''}
         </div>
         <div class="list-item-sub">${e.description||''}</div>
         <div style="font-size:10px;color:var(--text-m);margin-top:4px">${(e.details||[]).join(' · ')}</div>
@@ -617,6 +646,7 @@ function openModal(type, id=null) {
     document.getElementById('ev-title').value=e.title||'';
     document.getElementById('ev-desc').value=e.description||'';
     document.getElementById('ev-details').value=(e.details||[]).join('\n');
+    document.getElementById('ev-image').value=e.image||'';
     document.getElementById('modal-event').classList.add('open');
   } else if(type==='tt'){
     editTTId=null;
@@ -630,7 +660,7 @@ function openModal(type, id=null) {
   }
 }
 async function saveEventModal() {
-  const ev={centre_id:CENTRE_ID,tag:document.getElementById('ev-tag').value.trim()||'Event',title:document.getElementById('ev-title').value.trim(),description:document.getElementById('ev-desc').value.trim(),details:document.getElementById('ev-details').value.split('\n').map(s=>s.trim()).filter(Boolean),active:true};
+  const ev={centre_id:CENTRE_ID,tag:document.getElementById('ev-tag').value.trim()||'Event',title:document.getElementById('ev-title').value.trim(),description:document.getElementById('ev-desc').value.trim(),details:document.getElementById('ev-details').value.split('\n').map(s=>s.trim()).filter(Boolean),image:document.getElementById('ev-image').value.trim(),active:true};
   if(!ev.title){alert('Title required');return;}
   let error;
   if(editEventId){ ({error}=await sb.from('events').update(ev).eq('id',editEventId)); }
@@ -639,6 +669,11 @@ async function saveEventModal() {
   closeModal('event');
   const {data}=await sb.from('events').select('*').eq('centre_id',CENTRE_ID).order('sort_order');
   EVENTS=data||[]; renderEvents(); renderDashboard();
+}
+async function saveSheetUrl() {
+  const url = document.getElementById('ev-sheet-url-inp').value.trim();
+  const ok = await updateCentre({events_sheet_url: url}, 'saved-sheet-url', 'saved-sheet-url');
+  if (ok) document.getElementById('sheet-url-status').textContent = url ? '● Connected' : '';
 }
 async function toggleEvent(id,active) {
   await sb.from('events').update({active}).eq('id',id);
@@ -657,7 +692,7 @@ function renderTimetable() {
     <div class="list-item">
       <div class="list-item-body">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:2px">
-          <span style="background:rgba(91,184,245,.1);border:1px solid rgba(91,184,245,.2);padding:2px 8px;border-radius:20px;font-size:9px;color:var(--pl);font-weight:700">${DAY_NAMES[t.day_of_week]}</span>
+          <span style="background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.2);padding:2px 8px;border-radius:20px;font-size:9px;color:var(--pl);font-weight:700">${DAY_NAMES[t.day_of_week]}</span>
           <span class="list-item-title">${t.name}</span>
         </div>
         <div class="list-item-sub">${t.time_label}</div>
@@ -687,7 +722,7 @@ function renderSponsors() {
       <div style="font-size:26px">${s.emoji}</div>
       <div class="list-item-body">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:2px">
-          <span style="font-size:9px;border:1px solid rgba(91,184,245,.2);padding:1px 7px;border-radius:10px;color:var(--pd)">${s.badge}</span>
+          <span style="font-size:9px;border:1px solid rgba(240,192,64,.2);padding:1px 7px;border-radius:10px;color:var(--pd)">${s.badge}</span>
           <span class="list-item-title">${s.name}</span>
         </div>
         <div class="list-item-sub">${s.description||''}</div>
@@ -824,8 +859,8 @@ async function saveCentre() {
 //  BRANDING
 // ════════════════════════════════════
 function renderBranding() {
-  document.getElementById('b-primary').value=C.color_primary||'#5BB8F5';
-  document.getElementById('b-secondary').value=C.color_secondary||'#38BDF8';
+  document.getElementById('b-primary').value=C.color_primary||'#F0C040';
+  document.getElementById('b-secondary').value=C.color_secondary||'#12C494';
   document.getElementById('b-bg').value=C.color_bg||'#05131F';
   document.getElementById('b-text').value=C.color_text||'#F0F8FF';
 }

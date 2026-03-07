@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masjid Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --p:#F0C040;--pl:#FFE080;--pd:#8a6a1a;
+  --bg:#071A0E;--surface:#0D2818;--surface2:#112E1C;
+  --border:rgba(240,192,64,.15);--border-h:rgba(240,192,64,.35);
+  --text:#FDF6E3;--text-d:#A89870;--text-m:rgba(253,246,227,.5);
+  --danger:#E05555;--success:#3DB87A;--teal:#12C494;
+  --accent:#12C494;--accent-l:#3DFFB0;
+}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,rgba(240,192,64,.08),transparent 60%),var(--bg);z-index:999}
+.login-box{background:var(--surface);border:1px solid var(--border-h);border-radius:20px;padding:48px 40px;width:400px;display:flex;flex-direction:column;align-items:center;gap:20px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.login-logo{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--p);letter-spacing:3px}
+.login-sub{font-size:10px;letter-spacing:4px;color:var(--text-d);text-transform:uppercase;margin-top:-12px}
+.login-box input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border .2s}
+.login-box input:focus{border-color:var(--border-h)}
+.login-err{font-size:12px;color:var(--danger);display:none;text-align:center}
+.btn-primary{width:100%;background:var(--p);color:var(--bg);border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:1px;transition:opacity .2s}
+.btn-primary:hover{opacity:.88}
+.btn-primary:disabled{opacity:.5;cursor:default}
+.login-note{font-size:11px;color:var(--text-m);text-align:center;line-height:1.6}
+
+/* APP */
+#app{display:none;min-height:100vh}
+.sidebar{position:fixed;top:0;left:0;width:230px;height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sb-logo{padding:22px 20px 14px;border-bottom:1px solid var(--border)}
+.sb-logo-name{font-family:'Cinzel',serif;font-size:15px;font-weight:700;color:var(--p);letter-spacing:2px}
+.sb-logo-centre{font-size:10px;color:var(--text-d);margin-top:3px;letter-spacing:1px}
+.sb-section{padding:12px 12px 4px;font-size:9px;letter-spacing:3px;color:var(--text-m);text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:9px;margin:1px 8px;cursor:pointer;color:var(--text-d);font-size:13px;font-weight:500;transition:all .2s;border:1px solid transparent}
+.sb-item:hover{background:rgba(240,192,64,.06);color:var(--text)}
+.sb-item.active{background:rgba(240,192,64,.12);border-color:rgba(240,192,64,.25);color:var(--pl)}
+.sb-icon{font-size:16px;width:20px;text-align:center}
+.sb-footer{margin-top:auto;padding:16px 12px;border-top:1px solid var(--border)}
+.sb-status{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-m);margin-bottom:4px}
+.sb-centre-id{font-size:10px;color:var(--pd);font-family:'Cinzel',serif;letter-spacing:1px;margin-bottom:10px}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--success);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.btn-logout{width:100%;background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.25);border-radius:8px;padding:9px;color:var(--danger);font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s}
+.btn-logout:hover{background:rgba(224,85,85,.2)}
+
+.main{margin-left:230px;padding:28px 32px;min-height:100vh}
+.page{display:none}.page.active{display:block}
+.page-hdr{margin-bottom:22px}
+.page-hdr h1{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--p);letter-spacing:2px}
+.page-hdr p{font-size:12px;color:var(--text-m);margin-top:4px}
+
+.save-bar{display:flex;align-items:center;gap:12px;margin-bottom:18px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:11px 16px}
+.save-bar span{flex:1;font-size:12px;color:var(--text-m)}
+.btn-save{background:var(--p);color:var(--bg);border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:.5px;transition:opacity .2s}
+.btn-save:hover{opacity:.88}
+.saved-msg{font-size:11px;color:var(--success);display:none;font-weight:600}
+.err-msg{font-size:11px;color:var(--danger);display:none;font-weight:600}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px}
+.card-title{font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;color:var(--pd);text-transform:uppercase;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;color:var(--text-d);letter-spacing:.5px;font-weight:500}
+.field input,.field textarea,.field select{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border .2s;width:100%}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--border-h)}
+.field textarea{resize:vertical;min-height:70px;line-height:1.5}
+.field select option{background:var(--surface)}
+.field-note{font-size:10px;color:var(--text-m);margin-top:2px}
+hr{border:none;border-top:1px solid var(--border);margin:6px 0}
+
+/* Lists */
+.list-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px}
+.list-item-body{flex:1;min-width:0}
+.list-item-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.list-item-sub{font-size:11px;color:var(--text-m);line-height:1.5}
+.list-item-actions{display:flex;gap:6px;flex-shrink:0}
+.btn-icon{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text-d);font-size:12px;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.btn-icon:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.btn-icon.del:hover{background:rgba(224,85,85,.15);border-color:rgba(224,85,85,.3);color:var(--danger)}
+.btn-add{display:flex;align-items:center;gap:7px;padding:9px 14px;background:rgba(240,192,64,.07);border:1px dashed rgba(240,192,64,.25);border-radius:9px;color:var(--pd);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;width:100%;font-family:'Inter',sans-serif}
+.btn-add:hover{background:rgba(240,192,64,.12);color:var(--p);border-color:var(--border-h)}
+
+/* Toggle */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
+.toggle-row label{font-size:13px;color:var(--text);font-weight:500}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:rgba(255,255,255,.1);border-radius:12px;cursor:pointer;transition:background .2s;border:1px solid var(--border)}
+.toggle input:checked+.toggle-track{background:var(--teal);border-color:var(--teal)}
+.toggle-track::before{content:'';position:absolute;width:18px;height:18px;background:white;border-radius:50%;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.toggle input:checked+.toggle-track::before{transform:translateX(20px)}
+
+/* Stat cards */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+.stat-num{font-family:'Cinzel',serif;font-size:24px;font-weight:700;color:var(--p);line-height:1}
+.stat-lbl{font-size:10px;color:var(--text-m);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.stat-sub{font-size:11px;color:var(--text-d);margin-top:5px}
+.progress-wrap{background:rgba(255,255,255,.06);border-radius:8px;height:10px;overflow:hidden;margin:8px 0}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--pd),var(--p));border-radius:8px;transition:width .5s ease}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border-h);border-radius:16px;padding:28px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.modal-title{font-family:'Cinzel',serif;font-size:14px;letter-spacing:2px;color:var(--p);text-transform:uppercase}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:4px}
+.btn-cancel{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:8px;padding:9px 18px;color:var(--text-d);font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+.btn-cancel:hover{background:rgba(255,255,255,.1)}
+.swatch-row{display:flex;gap:8px}
+.swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s;flex-shrink:0}
+.swatch.sel{border-color:white;transform:scale(1.15)}
+
+/* Live badge */
+.live-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(61,184,122,.12);border:1px solid rgba(61,184,122,.25);border-radius:20px;padding:3px 10px;font-size:10px;color:var(--success);font-weight:600;letter-spacing:1px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--success);animation:blink 1.5s ease-in-out infinite}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div><div class="login-logo">Masjid Display</div><div class="login-sub">Admin Panel</div></div>
+    <div style="font-size:12px;color:var(--text-m);text-align:center">Sign in with your Supabase email and password</div>
+    <input type="email" id="login-email" placeholder="Email address" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <input type="password" id="login-pass" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <input type="text" id="login-centre" placeholder="Centre ID (e.g. giyc001)" value="giyc001"/>
+    <div class="login-err" id="login-err">Incorrect credentials. Please try again.</div>
+    <button class="btn-primary" onclick="doLogin()">Sign In</button>
+    <div class="login-note">Your credentials are managed in Supabase Authentication.<br>Contact the platform admin to create your account.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-name" id="sb-centre-name">Masjid</div>
+      <div class="sb-logo-centre" id="sb-centre-id">Loading...</div>
+    </div>
+    <div class="sb-section">Main</div>
+    <div class="sb-item active" onclick="nav('dashboard',this)"><span class="sb-icon">📊</span> Dashboard</div>
+    <div class="sb-item" onclick="nav('prayer',this)"><span class="sb-icon">🕌</span> Prayer Times</div>
+    <div class="sb-section">Content</div>
+    <div class="sb-item" onclick="nav('events',this)"><span class="sb-icon">📅</span> Events</div>
+    <div class="sb-item" onclick="nav('timetable',this)"><span class="sb-icon">🗓</span> Timetable</div>
+    <div class="sb-item" onclick="nav('sponsors',this)"><span class="sb-icon">🤝</span> Sponsors</div>
+    <div class="sb-item" onclick="nav('donation',this)"><span class="sb-icon">💚</span> Donation</div>
+    <div class="sb-item" onclick="nav('volunteer',this)"><span class="sb-icon">🙋</span> Volunteers</div>
+    <div class="sb-section">Screens</div>
+    <div class="sb-item" onclick="nav('social',this)"><span class="sb-icon">📱</span> Social Media</div>
+    <div class="sb-item" onclick="nav('ramadan',this)"><span class="sb-icon">🌙</span> Ramadan</div>
+    <div class="sb-item" onclick="nav('eid',this)"><span class="sb-icon">✨</span> Eid</div>
+    <div class="sb-section">Centre</div>
+    <div class="sb-item" onclick="nav('centre',this)"><span class="sb-icon">🏛</span> Centre Profile</div>
+    <div class="sb-item" onclick="nav('branding',this)"><span class="sb-icon">🎨</span> Branding</div>
+    <div class="sb-footer">
+      <div class="sb-status"><div class="status-dot"></div>Connected to Supabase</div>
+      <div class="sb-centre-id" id="sb-centre-id-footer">–</div>
+      <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-hdr">
+        <div style="display:flex;align-items:center;gap:12px">
+          <h1>Dashboard</h1>
+          <span class="live-badge"><div class="live-dot"></div>LIVE</span>
+        </div>
+        <p>Changes save instantly to Supabase and update every display screen worldwide in real-time.</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-num" id="dash-events">0</div><div class="stat-lbl">Events</div><div class="stat-sub">Active on display</div></div>
+        <div class="stat-card"><div class="stat-num" id="dash-sponsors">0</div><div class="stat-lbl">Sponsors</div><div class="stat-sub">Community partners</div></div>
+        <div class="stat-card"><div class="stat-num" id="dash-donation-pct">0%</div><div class="stat-lbl">Donation Goal</div><div class="stat-sub" id="dash-donation-sub">–</div></div>
+        <div class="stat-card"><div class="stat-num" id="dash-tt">0</div><div class="stat-lbl">Classes</div><div class="stat-sub">In weekly timetable</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Donation Progress</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:13px;color:var(--pl);font-weight:600" id="dash-raised">–</span>
+          <span style="font-size:13px;color:var(--text-m)" id="dash-goal">–</span>
+        </div>
+        <div class="progress-wrap"><div class="progress-bar" id="dash-bar" style="width:0%"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Quick Actions</div>
+        <div class="grid2" style="gap:10px">
+          <button class="btn-add" onclick="nav('events',null)">📅 Add / Edit Event</button>
+          <button class="btn-add" onclick="nav('prayer',null)">🕌 Update Prayer Times</button>
+          <button class="btn-add" onclick="nav('donation',null)">💚 Update Donation</button>
+          <button class="btn-add" onclick="nav('volunteer',null)">🙋 Update Volunteer Callout</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Display URL</div>
+        <div style="font-size:12px;color:var(--text-m);margin-bottom:10px">Open this URL on any TV or browser to show the display for this centre:</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:monospace;font-size:13px;color:var(--pl)" id="display-url">–</div>
+        <button class="btn-add" style="margin-top:10px;width:auto" onclick="copyUrl()">📋 Copy URL</button>
+      </div>
+    </div>
+
+    <!-- PRAYER TIMES -->
+    <div class="page" id="page-prayer">
+      <div class="page-hdr"><h1>Prayer Times</h1><p>Iqamah offsets are applied automatically to the live prayer times fetched from Aladhan API.</p></div>
+      <div class="save-bar"><span>Changes push to all screens instantly.</span><span class="saved-msg" id="saved-prayer">✓ Saved</span><span class="err-msg" id="err-prayer">Save failed</span><button class="btn-save" onclick="savePrayer()">Save</button></div>
+      <div class="card">
+        <div class="card-title">Iqamah Offsets (minutes after Adhan)</div>
+        <div class="grid3">
+          <div class="field"><label>Fajr</label><input type="number" id="iq-Fajr" min="0" max="60"/></div>
+          <div class="field"><label>Dhuhr</label><input type="number" id="iq-Dhuhr" min="0" max="60"/></div>
+          <div class="field"><label>Asr</label><input type="number" id="iq-Asr" min="0" max="60"/></div>
+          <div class="field"><label>Maghrib</label><input type="number" id="iq-Maghrib" min="0" max="60"/></div>
+          <div class="field"><label>Isha</label><input type="number" id="iq-Isha" min="0" max="60"/></div>
+          <div class="field"><label>Calculation Method</label>
+            <select id="calc-method">
+              <option value="11">Muslim World League (Australia)</option>
+              <option value="2">Islamic Society of North America</option>
+              <option value="3">Muslim World League</option>
+              <option value="4">Umm Al-Qura (Makkah)</option>
+              <option value="5">Egyptian Authority</option>
+              <option value="1">University of Islamic Sciences, Karachi</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Jumu'ah</div>
+        <div class="grid3">
+          <div class="field"><label>Jumu'ah Time</label><input type="time" id="jumuah-time"/></div>
+          <div class="field"><label>Khutbah Start</label><input type="time" id="jumuah-khutbah"/></div>
+          <div class="field"><label>Location</label><input type="text" id="jumuah-location" placeholder="Hall name"/></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="page" id="page-events">
+      <div class="page-hdr"><h1>Events</h1><p>Up to 4 events show on screen at once (the 4 most recently created active events).</p></div>
+      <div class="save-bar"><span>Saves directly to Supabase — display updates in real-time.</span></div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Google Sheets Feed</div>
+        <div class="field-note" style="margin-bottom:10px">
+          Publish your Google Sheet as CSV (File → Share → Publish to web → Sheet 1 → CSV) and paste the URL below.
+          Events auto-refresh every 30 min on the display.<br>
+          Required columns: <b>Category, Audience, Title, Date &amp; Time, Location, Description, Flyer Image URL</b>
+        </div>
+        <div class="field">
+          <label>Sheet CSV URL</label>
+          <input type="url" id="ev-sheet-url-inp" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv" style="font-size:11px"/>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+          <button class="btn-save" onclick="saveSheetUrl()">Save URL</button>
+          <span class="saved-msg" id="saved-sheet-url">✓ Saved</span>
+          <span id="sheet-url-status" style="font-size:11px;color:var(--text-m)"></span>
+        </div>
+      </div>
+      <div id="events-list"></div>
+      <button class="btn-add" onclick="openModal('event')">+ Add New Event</button>
+    </div>
+
+    <!-- TIMETABLE -->
+    <div class="page" id="page-timetable">
+      <div class="page-hdr"><h1>Weekly Timetable</h1><p>Classes and programmes shown on the timetable screen.</p></div>
+      <div class="save-bar"><span>Saves directly to Supabase — display updates in real-time.</span></div>
+      <div id="tt-list"></div>
+      <button class="btn-add" onclick="openModal('tt')">+ Add Class / Programme</button>
+    </div>
+
+    <!-- SPONSORS -->
+    <div class="page" id="page-sponsors">
+      <div class="page-hdr"><h1>Sponsors</h1><p>Shown in the sidebar of the Events screen.</p></div>
+      <div class="save-bar"><span>Saves directly to Supabase.</span></div>
+      <div id="sponsors-list"></div>
+      <button class="btn-add" onclick="openModal('sponsor')">+ Add Sponsor</button>
+    </div>
+
+    <!-- DONATION -->
+    <div class="page" id="page-donation">
+      <div class="page-hdr"><h1>Donation Tracker</h1><p>Update the fundraising progress shown on the events screen.</p></div>
+      <div class="save-bar"><span>Pushes to all screens instantly.</span><span class="saved-msg" id="saved-donation">✓ Saved</span><button class="btn-save" onclick="saveDonation()">Save</button></div>
+      <div class="card">
+        <div class="card-title">Campaign</div>
+        <div class="grid2">
+          <div class="field"><label>Campaign Title</label><input type="text" id="don-title" placeholder="e.g. Masjid Expansion Campaign"/></div>
+          <div>
+            <div style="font-size:11px;color:var(--text-m);margin-top:18px">Live Preview:</div>
+            <div class="progress-wrap"><div class="progress-bar" id="don-preview" style="width:0%"></div></div>
+            <div style="font-size:11px;color:var(--text-m)" id="don-preview-pct">0%</div>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:12px">
+          <div class="field"><label>Amount Raised ($)</label><input type="number" id="don-raised" oninput="updateDonPreview()"/></div>
+          <div class="field"><label>Goal Amount ($)</label><input type="number" id="don-goal" oninput="updateDonPreview()"/></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VOLUNTEER -->
+    <div class="page" id="page-volunteer">
+      <div class="page-hdr"><h1>Volunteer Callout</h1><p>Shows a banner on the events screen when active.</p></div>
+      <div class="save-bar"><span>Pushes to all screens instantly.</span><span class="saved-msg" id="saved-vol">✓ Saved</span><button class="btn-save" onclick="saveVolunteer()">Save</button></div>
+      <div class="card">
+        <div class="card-title">Volunteer Banner</div>
+        <div class="toggle-row">
+          <div><label>Show volunteer callout on display</label></div>
+          <label class="toggle"><input type="checkbox" id="vol-active"/><div class="toggle-track"></div></label>
+        </div>
+        <hr style="margin:10px 0"/>
+        <div class="field"><label>Callout Message</label><textarea id="vol-text" placeholder="e.g. We need volunteers for the Eid dinner..."></textarea></div>
+      </div>
+    </div>
+
+    <!-- SOCIAL -->
+    <div class="page" id="page-social">
+      <div class="page-hdr"><h1>Social Media</h1><p>Update the latest post preview shown on the social screen.</p></div>
+      <div class="save-bar"><span>Pushes to all screens instantly.</span><span class="saved-msg" id="saved-social">✓ Saved</span><button class="btn-save" onclick="saveSocial()">Save</button></div>
+      <div class="card">
+        <div class="card-title">Latest Post</div>
+        <div class="field"><label>Post text shown on social screen</label><textarea id="social-post" style="min-height:100px" placeholder="Paste your latest Instagram caption here..."></textarea></div>
+      </div>
+    </div>
+
+    <!-- RAMADAN -->
+    <div class="page" id="page-ramadan">
+      <div class="page-hdr"><h1>Ramadan</h1><p>Ramadan screen auto-activates when the Hijri month is Ramadan (month 9).</p></div>
+      <div class="save-bar"><span>Pushes to all screens instantly.</span><span class="saved-msg" id="saved-ram">✓ Saved</span><button class="btn-save" onclick="saveRamadan()">Save</button></div>
+      <div class="card">
+        <div class="card-title">Tarawih Time</div>
+        <div class="grid2">
+          <div class="field"><label>Tarawih Start</label><input type="time" id="tarawih-time"/><div class="field-note">Shown on Ramadan screen</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EID -->
+    <div class="page" id="page-eid">
+      <div class="page-hdr"><h1>Eid Settings</h1><p>Eid screen auto-activates on 1 Shawwal (Eid al-Fitr) and 10 Dhu al-Hijjah (Eid al-Adha).</p></div>
+      <div class="save-bar"><span>Pushes to all screens instantly.</span><span class="saved-msg" id="saved-eid">✓ Saved</span><button class="btn-save" onclick="saveEid()">Save</button></div>
+      <div class="card">
+        <div class="card-title">Eid Prayer Details</div>
+        <div class="grid3">
+          <div class="field"><label>Prayer Time</label><input type="time" id="eid-prayer"/></div>
+          <div class="field"><label>Takbir / Gates Open</label><input type="time" id="eid-takbir"/></div>
+          <div class="field"><label>Location</label><input type="text" id="eid-loc" placeholder="e.g. Community Hall"/></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTRE PROFILE -->
+    <div class="page" id="page-centre">
+      <div class="page-hdr"><h1>Centre Profile</h1><p>Core identity and location for this centre.</p></div>
+      <div class="save-bar"><span>Updates all screens instantly.</span><span class="saved-msg" id="saved-centre">✓ Saved</span><button class="btn-save" onclick="saveCentre()">Save</button></div>
+      <div class="card">
+        <div class="card-title">Identity</div>
+        <div class="grid2">
+          <div class="field"><label>Short Name</label><input type="text" id="c-name-short" placeholder="ASWJ GIYC"/></div>
+          <div class="field"><label>Full Name</label><input type="text" id="c-name-full" placeholder="Full centre name"/></div>
+          <div class="field"><label>Tagline</label><input type="text" id="c-tagline" placeholder="Islamic Centre"/></div>
+          <div class="field"><label>Website</label><input type="text" id="c-website" placeholder="aswjgiyc.org"/></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Location & Coordinates</div>
+        <div class="grid3">
+          <div class="field"><label>Suburb</label><input type="text" id="c-suburb"/></div>
+          <div class="field"><label>City</label><input type="text" id="c-city"/></div>
+          <div class="field"><label>State</label><input type="text" id="c-state"/></div>
+          <div class="field"><label>Latitude</label><input type="number" step="0.0001" id="c-lat" placeholder="-33.9400"/><div class="field-note">Used for prayer time calculation</div></div>
+          <div class="field"><label>Longitude</label><input type="number" step="0.0001" id="c-lng" placeholder="150.9900"/></div>
+          <div class="field"><label>Timezone</label><input type="text" id="c-tz" placeholder="Australia/Sydney"/></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Social Media</div>
+        <div class="grid2">
+          <div class="field"><label>Instagram Handle</label><input type="text" id="c-ig" placeholder="@handle"/></div>
+          <div class="field"><label>Facebook</label><input type="text" id="c-fb" placeholder="page name"/></div>
+          <div class="field"><label>YouTube</label><input type="text" id="c-yt" placeholder="channel name"/></div>
+          <div class="field"><label>Email</label><input type="email" id="c-email" placeholder="info@centre.org"/></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Bottom Ticker Text</div>
+        <div class="field"><textarea id="c-ticker" placeholder="Text that scrolls along the bottom of all screens..."></textarea></div>
+      </div>
+    </div>
+
+    <!-- BRANDING -->
+    <div class="page" id="page-branding">
+      <div class="page-hdr"><h1>Branding & Colours</h1><p>Customise the colour scheme for this centre's display.</p></div>
+      <div class="save-bar"><span>Colour changes apply immediately across all screens.</span><span class="saved-msg" id="saved-brand">✓ Saved</span><button class="btn-save" onclick="saveBranding()">Save</button></div>
+      <div class="card">
+        <div class="card-title">Colour Scheme</div>
+        <div class="grid2">
+          <div class="field"><label>Primary Accent</label><input type="color" id="b-primary" value="#F0C040"/><div class="field-note">Main colour — headers, times, highlights</div></div>
+          <div class="field"><label>Secondary Accent</label><input type="color" id="b-secondary" value="#12C494"/><div class="field-note">Teal/secondary — badges, lines</div></div>
+          <div class="field"><label>Background</label><input type="color" id="b-bg" value="#05131F"/><div class="field-note">Screen background colour</div></div>
+          <div class="field"><label>Text Colour</label><input type="color" id="b-text" value="#F0F8FF"/><div class="field-note">Main body text</div></div>
+        </div>
+        <div style="margin-top:14px">
+          <div style="font-size:11px;color:var(--text-m);margin-bottom:8px">Quick Presets:</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn-add" style="width:auto" onclick="setPreset('#F0C040','#12C494','#05131F','#F0F8FF')">🔵 Blue (Default)</button>
+            <button class="btn-add" style="width:auto" onclick="setPreset('#F0C040','#12C494','#071A0E','#FDF6E3')">🟢 Green/Gold</button>
+            <button class="btn-add" style="width:auto" onclick="setPreset('#A78BFA','#7C3AED','#0D0A1F','#EDE9FE')">🟣 Purple</button>
+            <button class="btn-add" style="width:auto" onclick="setPreset('#F97316','#EF4444','#1A0A00','#FFF7ED')">🟠 Orange</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODAL: EVENT -->
+<div class="modal-bg" id="modal-event">
+  <div class="modal">
+    <div class="modal-title" id="modal-event-title">Add Event</div>
+    <div class="field"><label>Tag</label><input type="text" id="ev-tag" placeholder="Event, Education, Youth, Fundraiser"/></div>
+    <div class="field"><label>Title</label><input type="text" id="ev-title"/></div>
+    <div class="field"><label>Description</label><textarea id="ev-desc"></textarea></div>
+    <div class="field"><label>Details (one per line)</label><textarea id="ev-details" placeholder="📅 March 30&#10;🕖 After Isha&#10;📍 Main Hall" style="min-height:80px"></textarea></div>
+    <div class="field">
+      <label>Flyer / Image URL (optional)</label>
+      <input type="url" id="ev-image" placeholder="https://drive.google.com/... or any direct image URL"/>
+      <div class="field-note">Paste a Google Drive share link or direct image URL. The image fills the entire card as a flyer.</div>
+    </div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('event')">Cancel</button><button class="btn-save" onclick="saveEventModal()">Save</button></div>
+  </div>
+</div>
+
+<!-- MODAL: TIMETABLE -->
+<div class="modal-bg" id="modal-tt">
+  <div class="modal">
+    <div class="modal-title" id="modal-tt-title">Add Class</div>
+    <div class="grid2">
+      <div class="field"><label>Day</label><select id="tt-day"><option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option></select></div>
+      <div class="field"><label>Time</label><input type="text" id="tt-time" placeholder="7:30 PM or After Maghrib"/></div>
+    </div>
+    <div class="field"><label>Class Name</label><input type="text" id="tt-name"/></div>
+    <div class="field"><label>Colour</label>
+      <div class="swatch-row" style="margin-top:4px">
+        <div class="swatch sel" id="sw-gold" style="background:#F0C040" onclick="selSwatch('gold')"></div>
+        <div class="swatch" id="sw-teal" style="background:#12C494" onclick="selSwatch('teal')"></div>
+        <div class="swatch" id="sw-purple" style="background:#7B5FE0" onclick="selSwatch('purple')"></div>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('tt')">Cancel</button><button class="btn-save" onclick="saveTTModal()">Save</button></div>
+  </div>
+</div>
+
+<!-- MODAL: SPONSOR -->
+<div class="modal-bg" id="modal-sponsor">
+  <div class="modal">
+    <div class="modal-title" id="modal-sponsor-title">Add Sponsor</div>
+    <div class="grid2">
+      <div class="field"><label>Name</label><input type="text" id="sp-name"/></div>
+      <div class="field"><label>Badge</label><input type="text" id="sp-badge" placeholder="Sponsor, Community Partner"/></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Emoji</label><input type="text" id="sp-emoji" placeholder="🌙"/></div>
+      <div class="field"><label>Description</label><input type="text" id="sp-desc"/></div>
+    </div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('sponsor')">Cancel</button><button class="btn-save" onclick="saveSponsorModal()">Save</button></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════
+//  SUPABASE
+// ════════════════════════════════════
+const SUPA_URL = 'https://odbouvigxacisnqgmmai.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kYm91dmlneGFjaXNucWdtbWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NzgwMTQsImV4cCI6MjA4ODM1NDAxNH0.zPxK2KFpR6JdA4WF_gNrPtJYihL2x1C25rlA4yC_zU8';
+const {createClient} = supabase;
+const sb = createClient(SUPA_URL, SUPA_KEY);
+
+let CENTRE_ID = 'giyc001';
+let C = null;
+let EVENTS = [], TIMETABLE = [], SPONSORS = [];
+
+// ════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  CENTRE_ID   = document.getElementById('login-centre').value.trim() || 'giyc001';
+  document.getElementById('login-err').style.display = 'none';
+  const {error} = await sb.auth.signInWithPassword({email, password:pass});
+  if (error) { document.getElementById('login-err').textContent=error.message; document.getElementById('login-err').style.display='block'; return; }
+  initApp();
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+// ════════════════════════════════════
+//  INIT
+// ════════════════════════════════════
+async function initApp() {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  await loadAll();
+  renderDashboard();
+}
+
+async function loadAll() {
+  const {data:centre} = await sb.from('centres').select('*').eq('id',CENTRE_ID).single();
+  C = centre || {};
+  const [evR,ttR,spR] = await Promise.all([
+    sb.from('events').select('*').eq('centre_id',CENTRE_ID).order('sort_order'),
+    sb.from('timetable').select('*').eq('centre_id',CENTRE_ID),
+    sb.from('sponsors').select('*').eq('centre_id',CENTRE_ID).order('sort_order'),
+  ]);
+  EVENTS    = evR.data||[];
+  TIMETABLE = ttR.data||[];
+  SPONSORS  = spR.data||[];
+  // Sidebar
+  document.getElementById('sb-centre-name').textContent = C.name_short||'Masjid';
+  document.getElementById('sb-centre-id').textContent   = CENTRE_ID;
+  document.getElementById('sb-centre-id-footer').textContent = CENTRE_ID;
+  document.getElementById('display-url').textContent    = `${location.origin}/masjid-display.html?centre=${CENTRE_ID}`;
+}
+
+// ════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════
+function nav(page, el) {
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  const renders = {dashboard:renderDashboard,prayer:renderPrayer,events:renderEvents,timetable:renderTimetable,sponsors:renderSponsors,donation:renderDonation,volunteer:renderVolunteer,social:renderSocial,ramadan:renderRamadan,eid:renderEid,centre:renderCentre,branding:renderBranding};
+  if(renders[page]) renders[page]();
+}
+
+function showSaved(id) { const el=document.getElementById(id);el.style.display='inline';setTimeout(()=>el.style.display='none',2500); }
+function showErr(id,msg) { const el=document.getElementById(id);el.textContent='⚠ '+(msg||'Save failed');el.style.display='inline';setTimeout(()=>el.style.display='none',4000); }
+
+// ════════════════════════════════════
+//  SAVE HELPERS
+// ════════════════════════════════════
+async function updateCentre(fields, savedId, errId) {
+  const {error} = await sb.from('centres').update(fields).eq('id',CENTRE_ID);
+  if(error) { showErr(errId, error.message); return false; }
+  C = {...C, ...fields};
+  showSaved(savedId); return true;
+}
+
+// ════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════
+function renderDashboard() {
+  document.getElementById('dash-events').textContent   = EVENTS.filter(e=>e.active).length;
+  document.getElementById('dash-sponsors').textContent = SPONSORS.filter(s=>s.active).length;
+  document.getElementById('dash-tt').textContent       = TIMETABLE.filter(t=>t.active).length;
+  const don = C.donation||{raised:0,goal:1};
+  const pct = Math.min(100,Math.round((don.raised/don.goal)*100));
+  document.getElementById('dash-donation-pct').textContent = pct+'%';
+  document.getElementById('dash-donation-sub').textContent = `$${(don.raised||0).toLocaleString()} of $${(don.goal||0).toLocaleString()}`;
+  document.getElementById('dash-raised').textContent = '$'+(don.raised||0).toLocaleString()+' raised';
+  document.getElementById('dash-goal').textContent   = 'Goal: $'+(don.goal||0).toLocaleString();
+  document.getElementById('dash-bar').style.width    = pct+'%';
+  document.getElementById('display-url').textContent = `${location.origin}/masjid-display.html?centre=${CENTRE_ID}`;
+}
+
+function copyUrl() { navigator.clipboard.writeText(document.getElementById('display-url').textContent); alert('URL copied!'); }
+
+// ════════════════════════════════════
+//  PRAYER
+// ════════════════════════════════════
+function renderPrayer() {
+  const iq = C.iqama_offsets||{};
+  ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(p=>{
+    const el=document.getElementById('iq-'+p); if(el) el.value=iq[p]??10;
+  });
+  document.getElementById('calc-method').value = C.calc_method||11;
+  document.getElementById('jumuah-time').value = C.jumuah_time||'13:30';
+  document.getElementById('jumuah-khutbah').value = C.jumuah_khutbah||'13:15';
+  document.getElementById('jumuah-location').value = C.jumuah_location||'';
+}
+async function savePrayer() {
+  const iq={};
+  ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(p=>{ iq[p]=parseInt(document.getElementById('iq-'+p).value)||10; });
+  await updateCentre({
+    iqama_offsets:iq,
+    calc_method:parseInt(document.getElementById('calc-method').value)||11,
+    jumuah_time:document.getElementById('jumuah-time').value,
+    jumuah_khutbah:document.getElementById('jumuah-khutbah').value,
+    jumuah_location:document.getElementById('jumuah-location').value,
+  },'saved-prayer','err-prayer');
+}
+
+// ════════════════════════════════════
+//  EVENTS
+// ════════════════════════════════════
+function renderEvents() {
+  const urlInp = document.getElementById('ev-sheet-url-inp');
+  if (urlInp) {
+    urlInp.value = C.events_sheet_url || '';
+    document.getElementById('sheet-url-status').textContent = C.events_sheet_url ? '● Connected' : '';
+  }
+  const el=document.getElementById('events-list');
+  el.innerHTML = EVENTS.map(e=>`
+    <div class="list-item">
+      <div class="list-item-body">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+          <span style="background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.2);padding:2px 8px;border-radius:20px;font-size:9px;color:var(--pl);letter-spacing:2px;font-weight:700">${e.tag}</span>
+          <span class="list-item-title">${e.title}</span>
+          ${!e.active?'<span style="font-size:9px;color:var(--danger);border:1px solid;padding:1px 6px;border-radius:10px">Hidden</span>':''}
+          ${e.image?'<span style="font-size:10px;color:var(--accent)">🖼 Flyer</span>':''}
+        </div>
+        <div class="list-item-sub">${e.description||''}</div>
+        <div style="font-size:10px;color:var(--text-m);margin-top:4px">${(e.details||[]).join(' · ')}</div>
+      </div>
+      <div class="list-item-actions">
+        <button class="btn-icon" onclick="openModal('event',${e.id})">✏️</button>
+        <button class="btn-icon" onclick="toggleEvent(${e.id},${!e.active})">${e.active?'👁':'🙈'}</button>
+        <button class="btn-icon del" onclick="deleteRow('events',${e.id},'events-list',renderEvents)">🗑</button>
+      </div>
+    </div>`).join('');
+}
+let editEventId=null;
+function openModal(type, id=null) {
+  if(type==='event') {
+    editEventId=id;
+    document.getElementById('modal-event-title').textContent=id?'Edit Event':'Add Event';
+    const e=id?EVENTS.find(x=>x.id===id):{tag:'',title:'',description:'',details:[]};
+    document.getElementById('ev-tag').value=e.tag||'';
+    document.getElementById('ev-title').value=e.title||'';
+    document.getElementById('ev-desc').value=e.description||'';
+    document.getElementById('ev-details').value=(e.details||[]).join('\n');
+    document.getElementById('ev-image').value=e.image||'';
+    document.getElementById('modal-event').classList.add('open');
+  } else if(type==='tt'){
+    editTTId=null;
+    document.getElementById('tt-name').value=''; document.getElementById('tt-time').value=''; document.getElementById('tt-day').value='0'; selSwatch('gold');
+    document.getElementById('modal-tt').classList.add('open');
+  } else if(type==='sponsor'){
+    editSpId=null;
+    ['sp-name','sp-badge','sp-emoji','sp-desc'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('sp-badge').value='Sponsor';
+    document.getElementById('modal-sponsor').classList.add('open');
+  }
+}
+async function saveEventModal() {
+  const ev={centre_id:CENTRE_ID,tag:document.getElementById('ev-tag').value.trim()||'Event',title:document.getElementById('ev-title').value.trim(),description:document.getElementById('ev-desc').value.trim(),details:document.getElementById('ev-details').value.split('\n').map(s=>s.trim()).filter(Boolean),image:document.getElementById('ev-image').value.trim(),active:true};
+  if(!ev.title){alert('Title required');return;}
+  let error;
+  if(editEventId){ ({error}=await sb.from('events').update(ev).eq('id',editEventId)); }
+  else { ({error}=await sb.from('events').insert(ev)); }
+  if(error){alert('Save error: '+error.message);return;}
+  closeModal('event');
+  const {data}=await sb.from('events').select('*').eq('centre_id',CENTRE_ID).order('sort_order');
+  EVENTS=data||[]; renderEvents(); renderDashboard();
+}
+async function saveSheetUrl() {
+  const url = document.getElementById('ev-sheet-url-inp').value.trim();
+  const ok = await updateCentre({events_sheet_url: url}, 'saved-sheet-url', 'saved-sheet-url');
+  if (ok) document.getElementById('sheet-url-status').textContent = url ? '● Connected' : '';
+}
+async function toggleEvent(id,active) {
+  await sb.from('events').update({active}).eq('id',id);
+  const {data}=await sb.from('events').select('*').eq('centre_id',CENTRE_ID).order('sort_order');
+  EVENTS=data||[]; renderEvents();
+}
+
+// ════════════════════════════════════
+//  TIMETABLE
+// ════════════════════════════════════
+const DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+function renderTimetable() {
+  const el=document.getElementById('tt-list');
+  const sorted=[...TIMETABLE].sort((a,b)=>a.day_of_week-b.day_of_week);
+  el.innerHTML=sorted.map(t=>`
+    <div class="list-item">
+      <div class="list-item-body">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:2px">
+          <span style="background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.2);padding:2px 8px;border-radius:20px;font-size:9px;color:var(--pl);font-weight:700">${DAY_NAMES[t.day_of_week]}</span>
+          <span class="list-item-title">${t.name}</span>
+        </div>
+        <div class="list-item-sub">${t.time_label}</div>
+      </div>
+      <div class="list-item-actions"><button class="btn-icon del" onclick="deleteRow('timetable',${t.id},'tt-list',renderTimetable)">🗑</button></div>
+    </div>`).join('');
+}
+let swatchSel='gold', editTTId=null;
+function selSwatch(c) { swatchSel=c; ['gold','teal','purple'].forEach(s=>document.getElementById('sw-'+s).classList.toggle('sel',s===c)); }
+async function saveTTModal() {
+  const name=document.getElementById('tt-name').value.trim(), time=document.getElementById('tt-time').value.trim(), day=parseInt(document.getElementById('tt-day').value);
+  if(!name||!time){alert('Fill in all fields');return;}
+  const {error}=await sb.from('timetable').insert({centre_id:CENTRE_ID,day_of_week:day,name,time_label:time,color:swatchSel,active:true});
+  if(error){alert('Error: '+error.message);return;}
+  closeModal('tt');
+  const {data}=await sb.from('timetable').select('*').eq('centre_id',CENTRE_ID);
+  TIMETABLE=data||[]; renderTimetable();
+}
+
+// ════════════════════════════════════
+//  SPONSORS
+// ════════════════════════════════════
+function renderSponsors() {
+  const el=document.getElementById('sponsors-list');
+  el.innerHTML=SPONSORS.map(s=>`
+    <div class="list-item">
+      <div style="font-size:26px">${s.emoji}</div>
+      <div class="list-item-body">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:2px">
+          <span style="font-size:9px;border:1px solid rgba(240,192,64,.2);padding:1px 7px;border-radius:10px;color:var(--pd)">${s.badge}</span>
+          <span class="list-item-title">${s.name}</span>
+        </div>
+        <div class="list-item-sub">${s.description||''}</div>
+      </div>
+      <div class="list-item-actions">
+        <button class="btn-icon del" onclick="deleteRow('sponsors',${s.id},'sponsors-list',renderSponsors)">🗑</button>
+      </div>
+    </div>`).join('');
+}
+let editSpId=null;
+async function saveSponsorModal() {
+  const sp={centre_id:CENTRE_ID,name:document.getElementById('sp-name').value.trim(),badge:document.getElementById('sp-badge').value.trim()||'Sponsor',emoji:document.getElementById('sp-emoji').value.trim()||'🌙',description:document.getElementById('sp-desc').value.trim(),active:true};
+  if(!sp.name){alert('Name required');return;}
+  const {error}=await sb.from('sponsors').insert(sp);
+  if(error){alert('Error: '+error.message);return;}
+  closeModal('sponsor');
+  const {data}=await sb.from('sponsors').select('*').eq('centre_id',CENTRE_ID).order('sort_order');
+  SPONSORS=data||[]; renderSponsors();
+}
+
+// ════════════════════════════════════
+//  GENERIC DELETE
+// ════════════════════════════════════
+async function deleteRow(table, id, listId, rerender) {
+  if(!confirm('Delete this item?'))return;
+  await sb.from(table).delete().eq('id',id);
+  if(table==='events'){const {data}=await sb.from('events').select('*').eq('centre_id',CENTRE_ID).order('sort_order');EVENTS=data||[];}
+  if(table==='timetable'){const {data}=await sb.from('timetable').select('*').eq('centre_id',CENTRE_ID);TIMETABLE=data||[];}
+  if(table==='sponsors'){const {data}=await sb.from('sponsors').select('*').eq('centre_id',CENTRE_ID).order('sort_order');SPONSORS=data||[];}
+  rerender();
+}
+
+// ════════════════════════════════════
+//  DONATION
+// ════════════════════════════════════
+function renderDonation() {
+  const don=C.donation||{title:'',raised:0,goal:0};
+  document.getElementById('don-title').value=don.title||'';
+  document.getElementById('don-raised').value=don.raised||0;
+  document.getElementById('don-goal').value=don.goal||0;
+  updateDonPreview();
+}
+function updateDonPreview() {
+  const r=parseFloat(document.getElementById('don-raised').value)||0;
+  const g=parseFloat(document.getElementById('don-goal').value)||1;
+  const pct=Math.min(100,Math.round((r/g)*100));
+  document.getElementById('don-preview').style.width=pct+'%';
+  document.getElementById('don-preview-pct').textContent=pct+'% — $'+r.toLocaleString()+' of $'+g.toLocaleString();
+}
+async function saveDonation() {
+  const don={title:document.getElementById('don-title').value.trim(),raised:parseFloat(document.getElementById('don-raised').value)||0,goal:parseFloat(document.getElementById('don-goal').value)||1};
+  await updateCentre({donation:don},'saved-donation','saved-donation');
+}
+
+// ════════════════════════════════════
+//  VOLUNTEER
+// ════════════════════════════════════
+function renderVolunteer() {
+  const v=C.volunteer||{active:false,text:''};
+  document.getElementById('vol-active').checked=v.active||false;
+  document.getElementById('vol-text').value=v.text||'';
+}
+async function saveVolunteer() {
+  const v={active:document.getElementById('vol-active').checked,text:document.getElementById('vol-text').value.trim()};
+  await updateCentre({volunteer:v},'saved-vol','saved-vol');
+}
+
+// ════════════════════════════════════
+//  SOCIAL
+// ════════════════════════════════════
+function renderSocial() { document.getElementById('social-post').value=C.social_post||''; }
+async function saveSocial() { await updateCentre({social_post:document.getElementById('social-post').value.trim()},'saved-social','saved-social'); }
+
+// ════════════════════════════════════
+//  RAMADAN
+// ════════════════════════════════════
+function renderRamadan() { document.getElementById('tarawih-time').value=C.tarawih_time||'21:15'; }
+async function saveRamadan() { await updateCentre({tarawih_time:document.getElementById('tarawih-time').value||'21:15'},'saved-ram','saved-ram'); }
+
+// ════════════════════════════════════
+//  EID
+// ════════════════════════════════════
+function renderEid() {
+  document.getElementById('eid-prayer').value=C.eid_prayer_time||'07:00';
+  document.getElementById('eid-takbir').value=C.eid_takbir_time||'06:30';
+  document.getElementById('eid-loc').value=C.eid_location||'';
+}
+async function saveEid() {
+  await updateCentre({eid_prayer_time:document.getElementById('eid-prayer').value,eid_takbir_time:document.getElementById('eid-takbir').value,eid_location:document.getElementById('eid-loc').value},'saved-eid','saved-eid');
+}
+
+// ════════════════════════════════════
+//  CENTRE PROFILE
+// ════════════════════════════════════
+function renderCentre() {
+  document.getElementById('c-name-short').value=C.name_short||'';
+  document.getElementById('c-name-full').value=C.name_full||'';
+  document.getElementById('c-tagline').value=C.tagline||'';
+  document.getElementById('c-website').value=C.website||'';
+  document.getElementById('c-suburb').value=C.suburb||'';
+  document.getElementById('c-city').value=C.city||'';
+  document.getElementById('c-state').value=C.state||'';
+  document.getElementById('c-lat').value=C.lat||'';
+  document.getElementById('c-lng').value=C.lng||'';
+  document.getElementById('c-tz').value=C.timezone||'Australia/Sydney';
+  document.getElementById('c-ig').value=C.instagram||'';
+  document.getElementById('c-fb').value=C.facebook||'';
+  document.getElementById('c-yt').value=C.youtube||'';
+  document.getElementById('c-email').value=C.email||'';
+  document.getElementById('c-ticker').value=C.ticker_text||'';
+}
+async function saveCentre() {
+  await updateCentre({
+    name_short:document.getElementById('c-name-short').value.trim(),
+    name_full:document.getElementById('c-name-full').value.trim(),
+    tagline:document.getElementById('c-tagline').value.trim(),
+    website:document.getElementById('c-website').value.trim(),
+    suburb:document.getElementById('c-suburb').value.trim(),
+    city:document.getElementById('c-city').value.trim(),
+    state:document.getElementById('c-state').value.trim(),
+    lat:parseFloat(document.getElementById('c-lat').value)||null,
+    lng:parseFloat(document.getElementById('c-lng').value)||null,
+    timezone:document.getElementById('c-tz').value.trim(),
+    instagram:document.getElementById('c-ig').value.trim(),
+    facebook:document.getElementById('c-fb').value.trim(),
+    youtube:document.getElementById('c-yt').value.trim(),
+    email:document.getElementById('c-email').value.trim(),
+    ticker_text:document.getElementById('c-ticker').value.trim(),
+  },'saved-centre','saved-centre');
+  document.getElementById('sb-centre-name').textContent=C.name_short||'Masjid';
+}
+
+// ════════════════════════════════════
+//  BRANDING
+// ════════════════════════════════════
+function renderBranding() {
+  document.getElementById('b-primary').value=C.color_primary||'#F0C040';
+  document.getElementById('b-secondary').value=C.color_secondary||'#12C494';
+  document.getElementById('b-bg').value=C.color_bg||'#05131F';
+  document.getElementById('b-text').value=C.color_text||'#F0F8FF';
+}
+async function saveBranding() {
+  await updateCentre({color_primary:document.getElementById('b-primary').value,color_secondary:document.getElementById('b-secondary').value,color_bg:document.getElementById('b-bg').value,color_text:document.getElementById('b-text').value},'saved-brand','saved-brand');
+}
+function setPreset(p,s,bg,t) {
+  document.getElementById('b-primary').value=p; document.getElementById('b-secondary').value=s;
+  document.getElementById('b-bg').value=bg; document.getElementById('b-text').value=t;
+}
+
+// ════════════════════════════════════
+//  MODAL HELPERS
+// ════════════════════════════════════
+function closeModal(type) { document.getElementById('modal-'+type).classList.remove('open'); }
+document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
+
+// ════════════════════════════════════
+//  CHECK EXISTING SESSION
+// ════════════════════════════════════
+(async()=>{
+  const {data:{session}} = await sb.auth.getSession();
+  if(session) { CENTRE_ID=new URLSearchParams(location.search).get('centre')||'giyc001'; initApp(); }
+})();
+</script>
+</body>
+</html>

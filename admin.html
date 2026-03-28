@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masjid Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:    #0B1410; --ink2:  #111D16; --ink3: #192820;
+  --gold:   #C9963A; --gold-l:#E8B86D; --gold-d:#7A5A1E;
+  --gold-dim:rgba(201,150,58,.12); --border:rgba(201,150,58,.18);
+  --cream:  #F2E8D5; --cream-d:#C4AE8A; --muted:rgba(194,174,138,.4);
+  --teal:   #3DAA7A; --danger:#e05050; --r:10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;background:var(--ink);color:var(--cream);font-family:'DM Sans',sans-serif;font-size:14px}
+
+/* ── PIN ── */
+#pin-screen{position:fixed;inset:0;z-index:100;background:var(--ink);display:flex;align-items:center;justify-content:center}
+#pin-screen.hidden{display:none}
+.pin-box{width:360px;display:flex;flex-direction:column;align-items:center;gap:18px;padding:40px}
+.pin-logo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--gold-l);text-align:center}
+.pin-masjid{background:var(--gold-dim);border:1px solid var(--border);border-radius:20px;padding:5px 18px;font-size:12px;color:var(--gold-l);letter-spacing:1px}
+.pin-sub{font-size:13px;color:var(--cream-d);text-align:center;line-height:1.6}
+.pin-input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;color:var(--cream);font-size:24px;text-align:center;letter-spacing:10px;outline:none;transition:border-color .2s;font-family:monospace}
+.pin-input:focus{border-color:rgba(201,150,58,.5)}
+.pin-err{font-size:12px;color:var(--danger);display:none}
+
+/* ── APP LAYOUT ── */
+#app{display:none;min-height:100vh}
+#app.visible{display:flex}
+.sidebar{width:220px;flex-shrink:0;background:var(--ink2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar::before{content:'';display:block;height:4px;background:linear-gradient(90deg,transparent,var(--gold),transparent);flex-shrink:0}
+.sb-hdr{padding:18px 18px 14px;border-bottom:1px solid var(--border)}
+.sb-masjid{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--gold-l);line-height:1.2}
+.sb-tag{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold-d);margin-top:3px}
+.nav-section{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold-d);padding:14px 18px 5px;font-weight:500}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;font-size:13px;color:var(--cream-d);border-left:2px solid transparent;transition:all .15s;user-select:none}
+.nav-item:hover{color:var(--cream);background:rgba(201,150,58,.05)}
+.nav-item.active{color:var(--gold-l);border-left-color:var(--gold);background:var(--gold-dim)}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.sb-footer{padding:14px 18px;border-top:1px solid var(--border);margin-top:auto}
+.display-btn{display:block;width:100%;background:var(--gold-dim);border:1px solid var(--border);border-radius:var(--r);color:var(--gold-l);font-size:12px;padding:8px 12px;cursor:pointer;text-align:center;text-decoration:none;transition:all .2s;margin-bottom:8px}
+.display-btn:hover{background:rgba(201,150,58,.22)}
+.signout-btn{display:block;width:100%;background:none;border:none;color:var(--muted);font-size:11px;padding:6px;cursor:pointer;text-align:center;transition:color .2s}
+.signout-btn:hover{color:var(--danger)}
+
+/* ── CONTENT ── */
+.content{flex:1;padding:28px 32px;max-width:940px}
+.page{display:none}
+.page.active{display:block}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--gold-l);margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--cream-d);margin-bottom:22px;line-height:1.6}
+
+/* ── CARDS ── */
+.card{background:var(--ink2);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:600;color:var(--gold);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.stat{background:var(--ink2);border:1px solid var(--border);border-radius:12px;padding:18px}
+.stat-num{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:400;color:var(--gold);line-height:1}
+.stat-label{font-size:11px;color:var(--cream-d);margin-top:4px}
+
+/* ── FORMS ── */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid.one{grid-template-columns:1fr}
+.grid.three{grid-template-columns:1fr 1fr 1fr}
+.grid.five{grid-template-columns:repeat(5,1fr)}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.span2{grid-column:span 2}
+label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:500}
+input,select,textarea{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--cream);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;width:100%;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{border-color:rgba(201,150,58,.45)}
+textarea{resize:vertical;min-height:80px}
+select option{background:#192820}
+
+/* ── BUTTONS ── */
+.btn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s;font-family:'DM Sans',sans-serif}
+.btn-primary{background:var(--gold);color:var(--ink)}.btn-primary:hover{background:var(--gold-l)}
+.btn-ghost{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--cream-d)}.btn-ghost:hover{border-color:rgba(201,150,58,.3);color:var(--cream)}
+.btn-danger{background:rgba(224,80,80,.12);border:1px solid rgba(224,80,80,.25);color:var(--danger)}.btn-danger:hover{background:rgba(224,80,80,.22)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:8px 12px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);font-weight:500}
+.tbl td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--cream-d);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+.tbl-actions{display:flex;gap:6px}
+
+/* ── BADGES ── */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:600}
+.badge-on{background:rgba(61,170,122,.15);color:var(--teal);border:1px solid rgba(61,170,122,.3)}
+.badge-off{background:rgba(224,80,80,.12);color:var(--danger);border:1px solid rgba(224,80,80,.25)}
+
+/* ── PRAYER DISPLAY ── */
+.prayer-grid-dash{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.pcard{text-align:center;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:10px 6px}
+.pcard-name{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold-d);margin-bottom:5px}
+.pcard-adhan{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--cream)}
+.pcard-iq{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* ── IQAMAH GRID ── */
+.iq-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.iq-cell{display:flex;flex-direction:column;gap:5px}
+.iq-label{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--gold-l);text-align:center}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--ink2);border:1px solid var(--teal);color:var(--teal);padding:10px 18px;border-radius:var(--r);font-size:13px;font-weight:500;z-index:9999;opacity:0;pointer-events:none;transition:opacity .25s}
+#toast.show{opacity:1}
+#toast.err{border-color:var(--danger);color:var(--danger)}
+
+/* ── INFO BOX ── */
+.info-box{background:var(--gold-dim);border:1px solid var(--border);border-radius:10px;padding:14px 18px;font-size:12px;color:var(--cream-d);line-height:1.7;margin-bottom:16px}
+.info-box strong{color:var(--gold-l)}
+.info-box code{background:rgba(255,255,255,.08);border-radius:4px;padding:1px 6px;font-size:11px;color:var(--cream);font-family:monospace}
+</style>
+</head>
+<body>
+
+<!-- PIN SCREEN -->
+<div id="pin-screen">
+  <div class="pin-box">
+    <div class="pin-logo">🕌 Masjid Admin</div>
+    <div class="pin-masjid" id="pin-masjid-name">Loading…</div>
+    <div class="pin-sub">Enter your admin PIN to manage content</div>
+    <input class="pin-input" type="password" inputmode="numeric" id="pin-input"
+      maxlength="8" placeholder="••••"
+      onkeydown="if(event.key==='Enter')checkPin()"/>
+    <div class="pin-err" id="pin-err">Incorrect PIN — please try again.</div>
+    <button class="btn btn-primary" style="width:100%" onclick="checkPin()">Enter →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <nav class="sidebar">
+    <div class="sb-hdr">
+      <div class="sb-masjid" id="sb-name">–</div>
+      <div class="sb-tag">Admin Panel</div>
+    </div>
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" onclick="nav('dashboard')"><span class="nav-icon">🏠</span>Dashboard</div>
+    <div class="nav-section">Content</div>
+    <div class="nav-item" onclick="nav('events')"><span class="nav-icon">📋</span>Events</div>
+    <div class="nav-item" onclick="nav('announce')"><span class="nav-icon">📢</span>Announcements</div>
+    <div class="nav-item" onclick="nav('sponsors')"><span class="nav-icon">🌟</span>Sponsors</div>
+    <div class="nav-section">Settings</div>
+    <div class="nav-item" onclick="nav('prayers')"><span class="nav-icon">🕌</span>Prayer Times</div>
+    <div class="nav-item" onclick="nav('masjid')"><span class="nav-icon">⚙️</span>Masjid Info</div>
+    <div class="nav-item" onclick="nav('pin')"><span class="nav-icon">🔑</span>Change PIN</div>
+    <div class="sb-footer">
+      <a class="display-btn" id="display-link" href="display.html" target="_blank">📺 Open Display</a>
+      <button class="signout-btn" onclick="signOut()">Sign out</button>
+    </div>
+  </nav>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub" id="dash-sub">Loading…</div>
+      <div class="stats">
+        <div class="stat"><div class="stat-num" id="st-events">–</div><div class="stat-label">Active Events</div></div>
+        <div class="stat"><div class="stat-num" id="st-ann">–</div><div class="stat-label">Announcements</div></div>
+        <div class="stat"><div class="stat-num" id="st-sponsors">–</div><div class="stat-label">Sponsors</div></div>
+        <div class="stat"><div class="stat-num" id="st-method">–</div><div class="stat-label">Prayer Method</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🕌 Today's Prayer Times</div>
+        <div class="prayer-grid-dash" id="dash-prayers"><div style="color:var(--muted);font-size:13px;grid-column:span 6">Loading from Aladhan API…</div></div>
+      </div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="page" id="page-events">
+      <div class="page-title">Events</div>
+      <div class="page-sub">Events appear on the Events screen in the display.</div>
+      <div class="card">
+        <div class="card-title">➕ Add Event</div>
+        <div class="grid">
+          <div class="field span2"><label>Title *</label><input id="ev-title" placeholder="e.g. Eid Celebration Dinner"/></div>
+          <div class="field"><label>Date & Time</label><input id="ev-dt" placeholder="e.g. Saturday 30 March · After Isha"/></div>
+          <div class="field"><label>Location</label><input id="ev-loc" placeholder="e.g. Main Prayer Hall"/></div>
+          <div class="field span2"><label>Description</label><textarea id="ev-desc" placeholder="Brief description…"></textarea></div>
+          <div class="field span2"><label>Image URL (optional)</label><input id="ev-img" placeholder="https://…"/></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary" onclick="addEvent()">Add Event</button></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Current Events</div>
+        <div id="ev-table">Loading…</div>
+      </div>
+    </div>
+
+    <!-- ANNOUNCEMENTS -->
+    <div class="page" id="page-announce">
+      <div class="page-title">Announcements</div>
+      <div class="page-sub">Shown on the Announcements screen. Keep these brief and urgent.</div>
+      <div class="card">
+        <div class="card-title">➕ Post Announcement</div>
+        <div class="grid one">
+          <div class="field"><label>Text *</label>
+            <textarea id="ann-text" placeholder="e.g. Jumu'ah this week at 1:30 PM — Lurnea Community Hall. Khutbah at 1:15 PM."></textarea>
+          </div>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary" onclick="addAnn()">Post</button></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Active Announcements</div>
+        <div id="ann-table">Loading…</div>
+      </div>
+    </div>
+
+    <!-- SPONSORS -->
+    <div class="page" id="page-sponsors">
+      <div class="page-title">Sponsors</div>
+      <div class="page-sub">Community partners shown on the Sponsors screen.</div>
+      <div class="card">
+        <div class="card-title">➕ Add Sponsor</div>
+        <div class="grid">
+          <div class="field"><label>Name *</label><input id="sp-name" placeholder="e.g. Barakah Finance"/></div>
+          <div class="field"><label>Tagline</label><input id="sp-tag" placeholder="e.g. Halal home financing"/></div>
+          <div class="field span2"><label>Logo URL (optional)</label><input id="sp-logo" placeholder="https://…"/></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary" onclick="addSponsor()">Add Sponsor</button></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Current Sponsors</div>
+        <div id="sp-table">Loading…</div>
+      </div>
+    </div>
+
+    <!-- PRAYER TIMES -->
+    <div class="page" id="page-prayers">
+      <div class="page-title">Prayer Times</div>
+      <div class="page-sub">Adhan times are fetched automatically from Aladhan.com using your location. Set the iqamah offsets below.</div>
+      <div class="card">
+        <div class="card-title">Iqamah Offsets <span style="font-weight:300;font-size:12px;color:var(--muted)">(minutes after adhan)</span></div>
+        <div class="iq-grid">
+          <div class="iq-cell"><div class="iq-label">Fajr</div><input class="iq-input" type="number" id="iq-fajr" min="0" max="60" style="text-align:center"/></div>
+          <div class="iq-cell"><div class="iq-label">Dhuhr</div><input class="iq-input" type="number" id="iq-dhuhr" min="0" max="60" style="text-align:center"/></div>
+          <div class="iq-cell"><div class="iq-label">Asr</div><input class="iq-input" type="number" id="iq-asr" min="0" max="60" style="text-align:center"/></div>
+          <div class="iq-cell"><div class="iq-label">Maghrib</div><input class="iq-input" type="number" id="iq-maghrib" min="0" max="30" style="text-align:center"/></div>
+          <div class="iq-cell"><div class="iq-label">Isha</div><input class="iq-input" type="number" id="iq-isha" min="0" max="60" style="text-align:center"/></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary" onclick="saveIqamah()">Save Iqamah</button></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Jumu'ah</div>
+        <div class="grid">
+          <div class="field"><label>Prayer Time</label><input type="time" id="jum-time"/></div>
+          <div class="field"><label>Location</label><input id="jum-loc" placeholder="e.g. Lurnea Community Hall"/></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary" onclick="saveJumuah()">Save Jumu'ah</button></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Prayer Calculation Method</div>
+        <div class="grid">
+          <div class="field">
+            <label>Method</label>
+            <select id="calc-method">
+              <option value="3">3 — Muslim World League (recommended)</option>
+              <option value="2">2 — ISNA (North America)</option>
+              <option value="4">4 — Umm al-Qura (Saudi Arabia)</option>
+              <option value="5">5 — Egyptian General Authority</option>
+              <option value="1">1 — University of Islamic Sciences, Karachi</option>
+              <option value="8">8 — Gulf Region</option>
+              <option value="11">11 — Majlis Ugama Islam Singapura</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary" onclick="saveMethod()">Save Method</button></div>
+      </div>
+    </div>
+
+    <!-- MASJID INFO -->
+    <div class="page" id="page-masjid">
+      <div class="page-title">Masjid Info</div>
+      <div class="page-sub">These details appear on the display screen and power the prayer time lookup.</div>
+      <div class="card">
+        <div class="card-title">Identity</div>
+        <div class="grid">
+          <div class="field"><label>Short Name</label><input id="cfg-name" placeholder="ASWJ GIYC"/></div>
+          <div class="field"><label>Full Name</label><input id="cfg-name-full" placeholder="As-Sunnah Wal Jama'ah Islamic Youth Centre"/></div>
+          <div class="field"><label>City</label><input id="cfg-city" placeholder="Liverpool"/></div>
+          <div class="field"><label>State</label><input id="cfg-state" placeholder="NSW"/></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Location <span style="font-weight:300;font-size:12px;color:var(--muted)">(used to calculate prayer times)</span></div>
+        <div class="grid">
+          <div class="field"><label>Latitude</label><input type="number" step="0.0001" id="cfg-lat" placeholder="-33.9400"/></div>
+          <div class="field"><label>Longitude</label><input type="number" step="0.0001" id="cfg-lng" placeholder="150.9900"/></div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px">Find your coordinates at <a href="https://maps.google.com" target="_blank" style="color:var(--gold-d)">maps.google.com</a> — right-click your masjid location.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Contact</div>
+        <div class="grid">
+          <div class="field"><label>Website</label><input id="cfg-web" placeholder="aswjgiyc.org"/></div>
+          <div class="field"><label>Email</label><input id="cfg-email" placeholder="info@aswjgiyc.org"/></div>
+          <div class="field"><label>Instagram</label><input id="cfg-ig" placeholder="@aswjgiyc"/></div>
+          <div class="field"><label>Phone</label><input id="cfg-phone" placeholder="(02) XXXX XXXX"/></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Ticker (bottom scrolling text)</div>
+        <div class="grid one">
+          <div class="field"><label>Extra ticker text</label>
+            <input id="cfg-ticker" placeholder="e.g. Weekend Islamic School — Sundays 9AM · New students welcome"/>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" onclick="saveMasjid()">Save All</button></div>
+    </div>
+
+    <!-- CHANGE PIN -->
+    <div class="page" id="page-pin">
+      <div class="page-title">Change PIN</div>
+      <div class="page-sub">The PIN protects access to this admin panel.</div>
+      <div class="card">
+        <div class="grid">
+          <div class="field"><label>New PIN</label><input type="password" inputmode="numeric" id="new-pin" placeholder="Enter new PIN" maxlength="8"/></div>
+          <div class="field"><label>Confirm PIN</label><input type="password" inputmode="numeric" id="new-pin2" placeholder="Repeat new PIN" maxlength="8"/></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary" onclick="changePin()">Change PIN</button></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  ⚙️  CONFIG — edit these 2 lines per masjid
+// ══════════════════════════════════════════════════════
+const SB_URL  = 'https://awjpkapkpmehccsoogja.supabase.co';   // ← your Supabase project URL
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3anBrYXBrcG1laGNjc29vZ2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NDI4MDEsImV4cCI6MjA5MDIxODgwMX0.m1lC8NyWcX8u0hBH9jCSsF4th1Trvr11hljbTrEiN7s';                       // ← your Supabase anon key
+
+// ── Supabase helpers ──
+const HDR = {
+  'Content-Type': 'application/json',
+  apikey: SB_ANON,
+  Authorization: `Bearer ${SB_ANON}`,
+  Prefer: 'return=representation'
+};
+async function sbGet(t, q='')    { const r=await fetch(`${SB_URL}/rest/v1/${t}?${q}`,{headers:HDR}); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+async function sbPost(t, body)   { const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:HDR,body:JSON.stringify(body)}); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+async function sbPatch(t, w, b)  { const r=await fetch(`${SB_URL}/rest/v1/${t}?${w}`,{method:'PATCH',headers:HDR,body:JSON.stringify(b)}); if(!r.ok) throw new Error(await r.text()); }
+async function sbDelete(t, id)   { const r=await fetch(`${SB_URL}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:HDR}); if(!r.ok) throw new Error(await r.text()); }
+
+const $ = id => document.getElementById(id);
+let MASJID = null;
+
+// ══════════════════════════════════════════════════════
+//  PIN AUTH
+// ══════════════════════════════════════════════════════
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function initPin() {
+  try {
+    const rows = await sbGet('masjid', 'limit=1');
+    if (rows.length) {
+      MASJID = rows[0];
+      $('pin-masjid-name').textContent = MASJID.name || 'Masjid';
+    }
+  } catch(e) {
+    $('pin-masjid-name').textContent = 'Could not connect';
+  }
+}
+
+async function checkPin() {
+  const pin = $('pin-input').value.trim();
+  if (!pin) return;
+  if (!MASJID) { toast('Cannot connect to database. Check your internet connection.', true); return; }
+  const hash = await sha256(pin);
+  if (hash !== MASJID.pin_hash) {
+    $('pin-err').style.display = 'block';
+    $('pin-input').value = '';
+    $('pin-input').focus();
+    return;
+  }
+  $('pin-screen').classList.add('hidden');
+  $('app').classList.add('visible');
+  loadAll();
+}
+
+function signOut() {
+  $('app').classList.remove('visible');
+  $('pin-screen').classList.remove('hidden');
+  $('pin-input').value = '';
+  $('pin-err').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════
+//  LOAD ALL
+// ══════════════════════════════════════════════════════
+async function loadAll() {
+  $('sb-name').textContent = MASJID.name || 'Masjid';
+
+  // Prefill masjid settings
+  $('cfg-name').value      = MASJID.name       || '';
+  $('cfg-name-full').value = MASJID.name_full  || '';
+  $('cfg-city').value      = MASJID.city        || '';
+  $('cfg-state').value     = MASJID.state       || '';
+  $('cfg-lat').value       = MASJID.lat         || '';
+  $('cfg-lng').value       = MASJID.lng         || '';
+  $('cfg-web').value       = MASJID.website     || '';
+  $('cfg-email').value     = MASJID.email       || '';
+  $('cfg-ig').value        = MASJID.instagram   || '';
+  $('cfg-phone').value     = MASJID.phone       || '';
+  $('cfg-ticker').value    = MASJID.ticker_extra|| '';
+  $('jum-time').value      = MASJID.jumuah_time || '13:30';
+  $('jum-loc').value       = MASJID.jumuah_loc  || '';
+  $('calc-method').value   = MASJID.calc_method || 3;
+  $('st-method').textContent = MASJID.calc_method || 3;
+
+  const iq = MASJID.iqamah || {};
+  $('iq-fajr').value    = iq.fajr    ?? 20;
+  $('iq-dhuhr').value   = iq.dhuhr   ?? 15;
+  $('iq-asr').value     = iq.asr     ?? 15;
+  $('iq-maghrib').value = iq.maghrib ?? 5;
+  $('iq-isha').value    = iq.isha    ?? 15;
+
+  $('dash-sub').textContent = [MASJID.name, MASJID.city, MASJID.state].filter(Boolean).join(' · ');
+
+  await Promise.all([loadEvents(), loadAnn(), loadSponsors(), loadDashPrayers()]);
+}
+
+// ── Dashboard prayer times ──
+async function loadDashPrayers() {
+  try {
+    const now = new Date();
+    const d = String(now.getDate()).padStart(2,'0');
+    const m = String(now.getMonth()+1).padStart(2,'0');
+    const y = now.getFullYear();
+    const r = await fetch(`https://api.aladhan.com/v1/timings/${d}-${m}-${y}?latitude=${MASJID.lat}&longitude=${MASJID.lng}&method=${MASJID.calc_method||3}`);
+    const data = await r.json();
+    if (data.code !== 200) throw new Error();
+    const t = data.data.timings;
+    const iq = MASJID.iqamah || {};
+    const fmt12 = s => { const [h,mm]=s.split(':').map(Number); return `${h%12||12}:${String(mm).padStart(2,'0')} ${h>=12?'PM':'AM'}`; };
+    const addMin = (s, n) => { const [h,mm]=s.split(':').map(Number),tot=h*60+mm+n; return `${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`; };
+    const prayers = ['Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha'];
+    $('dash-prayers').innerHTML = prayers.map(p => {
+      const adhan = t[p].substring(0,5);
+      const iqMin = iq[p.toLowerCase()];
+      const iqTime = (p !== 'Sunrise' && iqMin != null) ? fmt12(addMin(adhan, iqMin)) : null;
+      return `<div class="pcard">
+        <div class="pcard-name">${p}</div>
+        <div class="pcard-adhan">${fmt12(adhan)}</div>
+        ${iqTime ? `<div class="pcard-iq">Iqamah ${iqTime}</div>` : ''}
+      </div>`;
+    }).join('');
+  } catch(e) {
+    $('dash-prayers').innerHTML = '<div style="color:var(--muted);font-size:13px;grid-column:span 6">Could not load prayer times. Check your location coordinates in Masjid Info.</div>';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  EVENTS
+// ══════════════════════════════════════════════════════
+async function loadEvents() {
+  const rows = await sbGet('events', 'order=sort_order.asc,created_at.desc');
+  $('st-events').textContent = rows.filter(r=>r.active).length;
+  if (!rows.length) { $('ev-table').innerHTML = '<p style="color:var(--muted);font-size:13px">No events yet.</p>'; return; }
+  $('ev-table').innerHTML = `
+    <table class="tbl">
+      <thead><tr><th>Title</th><th>Date & Time</th><th>Location</th><th>Status</th><th></th></tr></thead>
+      <tbody>${rows.map(e => `
+        <tr>
+          <td style="color:var(--cream);font-weight:500">${e.title}</td>
+          <td>${e.date_time||'–'}</td>
+          <td>${e.location||'–'}</td>
+          <td><span class="badge ${e.active?'badge-on':'badge-off'}">${e.active?'Active':'Hidden'}</span></td>
+          <td><div class="tbl-actions">
+            <button class="btn btn-ghost btn-sm" onclick="toggleRow('events',${e.id},${e.active})">${e.active?'Hide':'Show'}</button>
+            <button class="btn btn-danger btn-sm" onclick="delRow('events',${e.id},loadEvents)">Delete</button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function addEvent() {
+  const title = $('ev-title').value.trim();
+  if (!title) { toast('Title is required', true); return; }
+  try {
+    await sbPost('events', { title, date_time: $('ev-dt').value, location: $('ev-loc').value, description: $('ev-desc').value, image_url: $('ev-img').value, active: true });
+    toast('Event added ✓');
+    ['ev-title','ev-dt','ev-loc','ev-desc','ev-img'].forEach(id => $(id).value = '');
+    loadEvents();
+  } catch(e) { toast(e.message, true); }
+}
+
+// ══════════════════════════════════════════════════════
+//  ANNOUNCEMENTS
+// ══════════════════════════════════════════════════════
+async function loadAnn() {
+  const rows = await sbGet('announcements', 'order=created_at.desc');
+  $('st-ann').textContent = rows.filter(r=>r.active).length;
+  if (!rows.length) { $('ann-table').innerHTML = '<p style="color:var(--muted);font-size:13px">No announcements.</p>'; return; }
+  $('ann-table').innerHTML = `
+    <table class="tbl">
+      <thead><tr><th>Text</th><th>Posted</th><th>Status</th><th></th></tr></thead>
+      <tbody>${rows.map(a => `
+        <tr>
+          <td style="color:var(--cream);max-width:420px">${a.text}</td>
+          <td style="color:var(--muted);font-size:11px;white-space:nowrap">${new Date(a.created_at).toLocaleDateString('en-AU')}</td>
+          <td><span class="badge ${a.active?'badge-on':'badge-off'}">${a.active?'Active':'Hidden'}</span></td>
+          <td><div class="tbl-actions">
+            <button class="btn btn-ghost btn-sm" onclick="toggleRow('announcements',${a.id},${a.active})">${a.active?'Hide':'Show'}</button>
+            <button class="btn btn-danger btn-sm" onclick="delRow('announcements',${a.id},loadAnn)">Delete</button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function addAnn() {
+  const text = $('ann-text').value.trim();
+  if (!text) { toast('Text is required', true); return; }
+  try {
+    await sbPost('announcements', { text, active: true });
+    toast('Announcement posted ✓');
+    $('ann-text').value = '';
+    loadAnn();
+  } catch(e) { toast(e.message, true); }
+}
+
+// ══════════════════════════════════════════════════════
+//  SPONSORS
+// ══════════════════════════════════════════════════════
+async function loadSponsors() {
+  const rows = await sbGet('sponsors', 'order=sort_order.asc,created_at.desc');
+  $('st-sponsors').textContent = rows.filter(r=>r.active).length;
+  if (!rows.length) { $('sp-table').innerHTML = '<p style="color:var(--muted);font-size:13px">No sponsors yet.</p>'; return; }
+  $('sp-table').innerHTML = `
+    <table class="tbl">
+      <thead><tr><th>Name</th><th>Tagline</th><th>Status</th><th></th></tr></thead>
+      <tbody>${rows.map(s => `
+        <tr>
+          <td style="color:var(--cream);font-weight:500">${s.name}</td>
+          <td>${s.tagline||'–'}</td>
+          <td><span class="badge ${s.active?'badge-on':'badge-off'}">${s.active?'Active':'Hidden'}</span></td>
+          <td><div class="tbl-actions">
+            <button class="btn btn-ghost btn-sm" onclick="toggleRow('sponsors',${s.id},${s.active})">${s.active?'Hide':'Show'}</button>
+            <button class="btn btn-danger btn-sm" onclick="delRow('sponsors',${s.id},loadSponsors)">Delete</button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function addSponsor() {
+  const name = $('sp-name').value.trim();
+  if (!name) { toast('Name is required', true); return; }
+  try {
+    await sbPost('sponsors', { name, tagline: $('sp-tag').value, logo_url: $('sp-logo').value, active: true });
+    toast('Sponsor added ✓');
+    ['sp-name','sp-tag','sp-logo'].forEach(id => $(id).value = '');
+    loadSponsors();
+  } catch(e) { toast(e.message, true); }
+}
+
+// ══════════════════════════════════════════════════════
+//  PRAYER SETTINGS
+// ══════════════════════════════════════════════════════
+async function saveIqamah() {
+  try {
+    await sbPatch('masjid', 'id=eq.masjid', {
+      iqamah: {
+        fajr:    parseInt($('iq-fajr').value)    || 20,
+        dhuhr:   parseInt($('iq-dhuhr').value)   || 15,
+        asr:     parseInt($('iq-asr').value)     || 15,
+        maghrib: parseInt($('iq-maghrib').value) || 5,
+        isha:    parseInt($('iq-isha').value)    || 15,
+      }
+    });
+    toast('Iqamah times saved ✓');
+    loadDashPrayers();
+  } catch(e) { toast(e.message, true); }
+}
+
+async function saveJumuah() {
+  try {
+    await sbPatch('masjid', 'id=eq.masjid', {
+      jumuah_time: $('jum-time').value,
+      jumuah_loc:  $('jum-loc').value,
+    });
+    toast("Jumu'ah saved ✓");
+  } catch(e) { toast(e.message, true); }
+}
+
+async function saveMethod() {
+  try {
+    const m = parseInt($('calc-method').value);
+    await sbPatch('masjid', 'id=eq.masjid', { calc_method: m });
+    MASJID.calc_method = m;
+    $('st-method').textContent = m;
+    toast('Calculation method saved ✓');
+    loadDashPrayers();
+  } catch(e) { toast(e.message, true); }
+}
+
+// ══════════════════════════════════════════════════════
+//  MASJID INFO
+// ══════════════════════════════════════════════════════
+async function saveMasjid() {
+  try {
+    const updates = {
+      name:         $('cfg-name').value,
+      name_full:    $('cfg-name-full').value,
+      city:         $('cfg-city').value,
+      state:        $('cfg-state').value,
+      lat:          parseFloat($('cfg-lat').value) || MASJID.lat,
+      lng:          parseFloat($('cfg-lng').value) || MASJID.lng,
+      website:      $('cfg-web').value,
+      email:        $('cfg-email').value,
+      instagram:    $('cfg-ig').value,
+      phone:        $('cfg-phone').value,
+      ticker_extra: $('cfg-ticker').value,
+      updated_at:   new Date().toISOString(),
+    };
+    await sbPatch('masjid', 'id=eq.masjid', updates);
+    Object.assign(MASJID, updates);
+    $('sb-name').textContent     = MASJID.name;
+    $('dash-sub').textContent    = [MASJID.name, MASJID.city, MASJID.state].filter(Boolean).join(' · ');
+    toast('Masjid info saved ✓');
+    loadDashPrayers();
+  } catch(e) { toast(e.message, true); }
+}
+
+// ══════════════════════════════════════════════════════
+//  CHANGE PIN
+// ══════════════════════════════════════════════════════
+async function changePin() {
+  const p1 = $('new-pin').value.trim();
+  const p2 = $('new-pin2').value.trim();
+  if (!p1)     { toast('Enter a new PIN', true); return; }
+  if (p1 !== p2) { toast('PINs do not match', true); return; }
+  try {
+    const hash = await sha256(p1);
+    await sbPatch('masjid', 'id=eq.masjid', { pin_hash: hash });
+    MASJID.pin_hash = hash;
+    $('new-pin').value = '';
+    $('new-pin2').value = '';
+    toast('PIN changed ✓');
+  } catch(e) { toast(e.message, true); }
+}
+
+// ══════════════════════════════════════════════════════
+//  GENERIC HELPERS
+// ══════════════════════════════════════════════════════
+async function toggleRow(table, id, current) {
+  try {
+    await sbPatch(table, `id=eq.${id}`, { active: !current });
+    toast((current ? 'Hidden' : 'Shown') + ' ✓');
+    if (table==='events')        loadEvents();
+    if (table==='announcements') loadAnn();
+    if (table==='sponsors')      loadSponsors();
+  } catch(e) { toast(e.message, true); }
+}
+
+async function delRow(table, id, reload) {
+  if (!confirm('Delete this item? This cannot be undone.')) return;
+  try {
+    await sbDelete(table, id);
+    toast('Deleted ✓');
+    reload();
+  } catch(e) { toast(e.message, true); }
+}
+window.toggleRow = toggleRow;
+window.delRow    = delRow;
+
+function nav(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  $('page-' + page)?.classList.add('active');
+  document.querySelector(`.nav-item[onclick="nav('${page}')"]`)?.classList.add('active');
+}
+
+function toast(msg, isErr=false) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = 'show' + (isErr ? ' err' : '');
+  setTimeout(() => el.className = '', 3000);
+}
+
+// ── Init ──
+initPin();
+</script>
+</body>
+</html>
